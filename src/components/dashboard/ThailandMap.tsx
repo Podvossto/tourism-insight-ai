@@ -35,7 +35,7 @@ export function ThailandMap({ selectedProvince, onProvinceClick, provinceData }:
           <p className="text-sm text-muted-foreground">เลื่อนเมาส์เพื่อดูข้อมูล • คลิกที่จังหวัดเพื่อดูรายละเอียดเพิ่มเติม</p>
         </div>
         
-        <div className="relative w-full h-[500px] bg-accent/20 rounded-lg overflow-hidden border border-border/50">
+        <div className="relative w-full h-[500px] bg-accent/20 rounded-lg overflow-hidden border border-border/50 shadow-inner transition-all duration-300 hover:shadow-lg">
           <ComposableMap
             projection="geoMercator"
             projectionConfig={{
@@ -52,7 +52,7 @@ export function ThailandMap({ selectedProvince, onProvinceClick, provinceData }:
                   const data = provinceData?.[provinceName];
 
                   return (
-                    <Geography
+                     <Geography
                       key={geo.rsmKey}
                       geography={geo}
                       onClick={() => onProvinceClick(provinceName)}
@@ -60,9 +60,10 @@ export function ThailandMap({ selectedProvince, onProvinceClick, provinceData }:
                         default: {
                           fill: getProvinceColor(provinceName),
                           stroke: isSelected ? "hsl(var(--primary))" : "hsl(var(--border))",
-                          strokeWidth: isSelected ? 3 : 1,
+                          strokeWidth: isSelected ? 3 : 0.8,
                           outline: "none",
-                          transition: "all 0.3s ease",
+                          transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                          opacity: isSelected ? 1 : 0.95,
                         },
                         hover: {
                           fill: "hsl(var(--primary))",
@@ -70,13 +71,17 @@ export function ThailandMap({ selectedProvince, onProvinceClick, provinceData }:
                           strokeWidth: 2.5,
                           outline: "none",
                           cursor: "pointer",
-                          filter: "brightness(1.1)",
+                          filter: "brightness(1.15) saturate(1.2)",
+                          opacity: 1,
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                         },
                         pressed: {
                           fill: "hsl(var(--primary))",
                           stroke: "hsl(var(--primary))",
                           strokeWidth: 3,
                           outline: "none",
+                          filter: "brightness(0.95)",
+                          transition: "all 0.1s ease",
                         },
                       }}
                     >
@@ -95,35 +100,37 @@ export function ThailandMap({ selectedProvince, onProvinceClick, provinceData }:
           </ComposableMap>
           
           {/* Tooltip hint */}
-          <div className="absolute bottom-4 left-4 bg-background/80 backdrop-blur-sm px-3 py-2 rounded-md border border-border">
+          <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-md px-4 py-2 rounded-lg border border-border/50 shadow-lg transition-all duration-300 hover:scale-105">
             <p className="text-xs text-muted-foreground flex items-center gap-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse" />
-              {selectedProvince ? `เลือก: ${selectedProvince}` : "เลือกจังหวัดบนแผนที่"}
+              <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
+              <span className="font-medium">
+                {selectedProvince ? `เลือก: ${selectedProvince}` : "เลือกจังหวัดบนแผนที่"}
+              </span>
             </p>
           </div>
         </div>
 
         {/* Legend */}
-        <div className="flex items-center justify-center gap-4 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded" style={{ backgroundColor: "hsl(165 100% 25%)" }} />
-            <span className="text-muted-foreground">&gt;100M</span>
+        <div className="flex items-center justify-center gap-4 text-xs flex-wrap">
+          <div className="flex items-center gap-2 group cursor-pointer transition-all duration-200 hover:scale-110">
+            <div className="w-4 h-4 rounded shadow-sm transition-all duration-200 group-hover:shadow-md" style={{ backgroundColor: "hsl(165 100% 25%)" }} />
+            <span className="text-muted-foreground group-hover:text-foreground transition-colors">&gt;100M</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded" style={{ backgroundColor: "hsl(165 100% 33%)" }} />
-            <span className="text-muted-foreground">75-100M</span>
+          <div className="flex items-center gap-2 group cursor-pointer transition-all duration-200 hover:scale-110">
+            <div className="w-4 h-4 rounded shadow-sm transition-all duration-200 group-hover:shadow-md" style={{ backgroundColor: "hsl(165 100% 33%)" }} />
+            <span className="text-muted-foreground group-hover:text-foreground transition-colors">75-100M</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded" style={{ backgroundColor: "hsl(165 80% 40%)" }} />
-            <span className="text-muted-foreground">50-75M</span>
+          <div className="flex items-center gap-2 group cursor-pointer transition-all duration-200 hover:scale-110">
+            <div className="w-4 h-4 rounded shadow-sm transition-all duration-200 group-hover:shadow-md" style={{ backgroundColor: "hsl(165 80% 40%)" }} />
+            <span className="text-muted-foreground group-hover:text-foreground transition-colors">50-75M</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded" style={{ backgroundColor: "hsl(165 60% 50%)" }} />
-            <span className="text-muted-foreground">25-50M</span>
+          <div className="flex items-center gap-2 group cursor-pointer transition-all duration-200 hover:scale-110">
+            <div className="w-4 h-4 rounded shadow-sm transition-all duration-200 group-hover:shadow-md" style={{ backgroundColor: "hsl(165 60% 50%)" }} />
+            <span className="text-muted-foreground group-hover:text-foreground transition-colors">25-50M</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded" style={{ backgroundColor: "hsl(165 40% 65%)" }} />
-            <span className="text-muted-foreground">&lt;25M</span>
+          <div className="flex items-center gap-2 group cursor-pointer transition-all duration-200 hover:scale-110">
+            <div className="w-4 h-4 rounded shadow-sm transition-all duration-200 group-hover:shadow-md" style={{ backgroundColor: "hsl(165 40% 65%)" }} />
+            <span className="text-muted-foreground group-hover:text-foreground transition-colors">&lt;25M</span>
           </div>
         </div>
       </div>
