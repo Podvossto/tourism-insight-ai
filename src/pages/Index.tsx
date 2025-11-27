@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Brain, Calendar } from "lucide-react";
 import { PredictionForm } from "@/components/dashboard/PredictionForm";
@@ -6,13 +6,23 @@ import { ThailandMap } from "@/components/dashboard/ThailandMap";
 import { SummaryCards } from "@/components/dashboard/SummaryCards";
 import { ProvinceDetails } from "@/components/dashboard/ProvinceDetails";
 import { useToast } from "@/hooks/use-toast";
+import { loadHistoricalData } from "@/utils/csvLoader";
 import type { PredictionInput, PredictionResult, ProvinceData } from "@/types/tourism";
 
 const Index = () => {
   const [selectedProvince, setSelectedProvince] = useState<string>("");
   const [provinceData, setProvinceData] = useState<Record<string, ProvinceData>>({});
   const [currentPrediction, setCurrentPrediction] = useState<ProvinceData | undefined>();
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const { toast } = useToast();
+
+  // Load historical data on mount
+  useEffect(() => {
+    loadHistoricalData().then((data) => {
+      setProvinceData(data);
+      setIsLoadingData(false);
+    });
+  }, []);
 
   // Mock API call - replace with actual API endpoint
   const predictMutation = useMutation({
