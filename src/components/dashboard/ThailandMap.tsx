@@ -1,6 +1,8 @@
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { Card } from "@/components/ui/card";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { ProvinceData } from "@/types/tourism";
+import { TrendingUp, Users } from "lucide-react";
 
 const THAILAND_TOPO_JSON = "https://raw.githubusercontent.com/apisit/thailand.json/master/thailand.json";
 
@@ -30,10 +32,10 @@ export function ThailandMap({ selectedProvince, onProvinceClick, provinceData }:
       <div className="space-y-4">
         <div>
           <h2 className="text-xl font-semibold text-foreground">Thailand Tourism Forecast Map</h2>
-          <p className="text-sm text-muted-foreground">คลิกที่จังหวัดเพื่อดูรายละเอียด</p>
+          <p className="text-sm text-muted-foreground">เลื่อนเมาส์เพื่อดูข้อมูล • คลิกที่จังหวัดเพื่อดูรายละเอียดเพิ่มเติม</p>
         </div>
         
-        <div className="relative w-full h-[500px] bg-accent/20 rounded-lg overflow-hidden">
+        <div className="relative w-full h-[500px] bg-accent/20 rounded-lg overflow-hidden border border-border/50">
           <ComposableMap
             projection="geoMercator"
             projectionConfig={{
@@ -57,21 +59,23 @@ export function ThailandMap({ selectedProvince, onProvinceClick, provinceData }:
                       style={{
                         default: {
                           fill: getProvinceColor(provinceName),
-                          stroke: "hsl(var(--background))",
-                          strokeWidth: isSelected ? 2 : 0.5,
+                          stroke: isSelected ? "hsl(var(--primary))" : "hsl(var(--border))",
+                          strokeWidth: isSelected ? 3 : 1,
                           outline: "none",
+                          transition: "all 0.3s ease",
                         },
                         hover: {
                           fill: "hsl(var(--primary))",
-                          stroke: "hsl(var(--background))",
-                          strokeWidth: 2,
+                          stroke: "hsl(var(--primary))",
+                          strokeWidth: 2.5,
                           outline: "none",
                           cursor: "pointer",
+                          filter: "brightness(1.1)",
                         },
                         pressed: {
                           fill: "hsl(var(--primary))",
-                          stroke: "hsl(var(--background))",
-                          strokeWidth: 2,
+                          stroke: "hsl(var(--primary))",
+                          strokeWidth: 3,
                           outline: "none",
                         },
                       }}
@@ -89,6 +93,14 @@ export function ThailandMap({ selectedProvince, onProvinceClick, provinceData }:
               }
             </Geographies>
           </ComposableMap>
+          
+          {/* Tooltip hint */}
+          <div className="absolute bottom-4 left-4 bg-background/80 backdrop-blur-sm px-3 py-2 rounded-md border border-border">
+            <p className="text-xs text-muted-foreground flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse" />
+              {selectedProvince ? `เลือก: ${selectedProvince}` : "เลือกจังหวัดบนแผนที่"}
+            </p>
+          </div>
         </div>
 
         {/* Legend */}

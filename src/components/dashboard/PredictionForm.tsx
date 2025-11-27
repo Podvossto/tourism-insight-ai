@@ -12,9 +12,10 @@ import type { PredictionInput } from "@/types/tourism";
 interface PredictionFormProps {
   onPredict: (input: PredictionInput) => void;
   isLoading?: boolean;
+  onProvinceSelect?: (province: string) => void;
 }
 
-export function PredictionForm({ onPredict, isLoading }: PredictionFormProps) {
+export function PredictionForm({ onPredict, isLoading, onProvinceSelect }: PredictionFormProps) {
   const [formData, setFormData] = useState<PredictionInput>({
     province: "",
     tourism_type: "Thai",
@@ -103,7 +104,13 @@ export function PredictionForm({ onPredict, isLoading }: PredictionFormProps) {
           </Label>
           <Select
             value={formData.province}
-            onValueChange={(value) => setFormData({ ...formData, province: value })}
+            onValueChange={(value) => {
+              setFormData({ ...formData, province: value });
+              // Highlight province on map when selected
+              if (onProvinceSelect && value !== "all") {
+                onProvinceSelect(value);
+              }
+            }}
           >
             <SelectTrigger className="bg-background">
               <SelectValue placeholder="เลือกจังหวัด" />

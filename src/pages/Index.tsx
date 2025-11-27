@@ -88,6 +88,13 @@ const Index = () => {
     }
   };
 
+  const handleProvinceSelect = (province: string) => {
+    setSelectedProvince(province);
+    if (provinceData[province]) {
+      setCurrentPrediction(provinceData[province]);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -116,6 +123,7 @@ const Index = () => {
             <PredictionForm 
               onPredict={handlePredict}
               isLoading={predictMutation.isPending}
+              onProvinceSelect={handleProvinceSelect}
             />
           </div>
 
