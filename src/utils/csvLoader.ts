@@ -1,95 +1,220 @@
-import Papa from 'papaparse';
-import type { ProvinceData } from '@/types/tourism';
+import Papa from "papaparse";
+
+import { MONTHS } from "@/data/provinces";
+import type {
+  MonthlyDataPoint,
+  ProvinceData,
+  QuarterPrediction,
+} from "@/types/tourism";
 
 interface CSVRow {
-  'Income(Million Baht)': string;
-  'Tourism_Amount': string;
-  'Year_2023'?: string;
-  'Year_2024'?: string;
-  'Year_2025'?: string;
   [key: string]: string | undefined;
 }
 
-export async function loadHistoricalData(): Promise<Record<string, ProvinceData>> {
+const HISTORICAL_PATH = "/data/tourism-full.csv";
+const QUARTER_PREDICTION_PATH = "/data/predictions-2025-q4.csv";
+const YEAR_COLUMNS = ["Year_2023", "Year_2024", "Year_2025"];
+const MONTH_COLUMNS = Array.from(
+  { length: 12 },
+  (_, idx) => `Month_${idx + 1}`
+);
+const PROVINCE_PREFIX = "Province_";
+
+const MONTH_NAME_MAP = new Map(
+  MONTHS.map((month) => [month.value, month.label])
+);
+
+const parseNumber = (value?: string) => {
+  const parsed = parseFloat(value ?? "0");
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const findFlaggedColumn = (row: CSVRow, prefix: string) => {
+  const key = Object.keys(row).find(
+    (column) => column.startsWith(prefix) && row[column] === "1"
+  );
+  return key ? key.replace(prefix, "") : undefined;
+};
+
+const resolveYear = (row: CSVRow) => {
+  const yearKey = YEAR_COLUMNS.find((column) => row[column] === "1");
+  return yearKey
+    ? parseInt(yearKey.replace("Year_", ""), 10)
+    : new Date().getFullYear();
+};
+
+const resolveMonth = (row: CSVRow) => {
+  const monthKey = MONTH_COLUMNS.find((column) => row[column] === "1");
+  return monthKey ? parseInt(monthKey.replace("Month_", ""), 10) : 1;
+};
+
+const buildFestivalImpact = (
+  monthAverages: Record<number, { income: number; count: number }>,
+  avgIncome: number
+) => {
+  const base = Math.max(avgIncome, 1);
+  return Object.entries(monthAverages)
+    .filter(([, stats]) => stats.count > 0)
+    .map(([month, stats]) => {
+      const averageIncome = stats.income / stats.count;
+      return {
+        festival: `Month ${MONTH_NAME_MAP.get(Number(month)) ?? month}`,
+        impact: Number((averageIncome / base).toFixed(2)),
+        revenue: averageIncome,
+      };
+    })
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 3);
+};
+
+export async function loadHistoricalData(): Promise<
+  Record<string, ProvinceData>
+> {
   try {
-    const response = await fetch('/data/tourism-historical.csv');
+    const response = await fetch(HISTORICAL_PATH);
     const csvText = await response.text();
-    
+
     const parsed = Papa.parse<CSVRow>(csvText, {
       header: true,
       skipEmptyLines: true,
     });
 
-    const provinceData: Record<string, ProvinceData> = {};
-    
-    // Group data by province
-    const provinceMap: Record<string, Array<{ year: number; income: number; tourists: number }>> = {};
-    
+    const provinceBuckets: Record<
+      string,
+      Array<{ year: number; month: number; income: number; tourists: number }>
+    > = {};
+
     parsed.data.forEach((row) => {
-      // Find which province this row belongs to
-      const provinceKey = Object.keys(row).find(key => key.startsWith('Province_') && row[key] === '1');
-      if (!provinceKey) return;
-      
-      const provinceName = provinceKey.replace('Province_', '');
-      
-      // Find year
-      let year = 2024; // default
-      if (row['Year_2023'] === '1') year = 2023;
-      if (row['Year_2024'] === '1') year = 2024;
-      if (row['Year_2025'] === '1') year = 2025;
-      
-      const income = parseFloat(row['Income(Million Baht)']) || 0;
-      const tourists = parseFloat(row['Tourism_Amount']) || 0;
-      
-      if (!provinceMap[provinceName]) {
-        provinceMap[provinceName] = [];
+      const provinceName = findFlaggedColumn(row, PROVINCE_PREFIX);
+      if (!provinceName) return;
+
+      const income = parseNumber(row["Income(Million Baht)"]);
+      const tourists = parseNumber(row["Tourism_Amount"]);
+      const year = resolveYear(row);
+      const month = resolveMonth(row);
+
+      if (!provinceBuckets[provinceName]) {
+        provinceBuckets[provinceName] = [];
       }
-      
-      provinceMap[provinceName].push({ year, income, tourists });
+
+      provinceBuckets[provinceName].push({ year, month, income, tourists });
     });
-    
-    // Convert to ProvinceData format
-    Object.entries(provinceMap).forEach(([provinceName, data]) => {
-      // Calculate average for the province
-      const avgIncome = data.reduce((sum, d) => sum + d.income, 0) / data.length;
-      const avgTourists = data.reduce((sum, d) => sum + d.tourists, 0) / data.length;
-      
-      // Get trend data by year
-      const yearMap: Record<number, { income: number[]; tourists: number[] }> = {};
-      data.forEach(({ year, income, tourists }) => {
-        if (!yearMap[year]) {
-          yearMap[year] = { income: [], tourists: [] };
+
+    const provinceData: Record<string, ProvinceData> = {};
+
+    Object.entries(provinceBuckets).forEach(([provinceName, entries]) => {
+      const avgIncome =
+        entries.reduce((sum, entry) => sum + entry.income, 0) / entries.length;
+      const avgTourists =
+        entries.reduce((sum, entry) => sum + entry.tourists, 0) /
+        entries.length;
+
+      const yearlyAggregation: Record<
+        number,
+        { income: number; tourists: number; count: number }
+      > = {};
+      const monthAggregation: Record<
+        number,
+        { income: number; count: number }
+      > = {};
+
+      entries.forEach((entry) => {
+        if (!yearlyAggregation[entry.year]) {
+          yearlyAggregation[entry.year] = { income: 0, tourists: 0, count: 0 };
         }
-        yearMap[year].income.push(income);
-        yearMap[year].tourists.push(tourists);
+        yearlyAggregation[entry.year].income += entry.income;
+        yearlyAggregation[entry.year].tourists += entry.tourists;
+        yearlyAggregation[entry.year].count += 1;
+
+        if (!monthAggregation[entry.month]) {
+          monthAggregation[entry.month] = { income: 0, count: 0 };
+        }
+        monthAggregation[entry.month].income += entry.income;
+        monthAggregation[entry.month].count += 1;
       });
-      
-      const trends = Object.entries(yearMap)
-        .map(([year, values]) => ({
-          year: parseInt(year),
-          revenue: values.income.reduce((sum, v) => sum + v, 0) / values.income.length * 1000, // Convert to thousands
-          tourists: values.tourists.reduce((sum, v) => sum + v, 0) / values.tourists.length / 1000000, // Convert to millions
+
+      const trends = Object.entries(yearlyAggregation)
+        .map(([year, stats]) => ({
+          year: Number(year),
+          revenue: stats.income / stats.count,
+          tourists: stats.tourists / stats.count,
         }))
         .sort((a, b) => a.year - b.year);
-      
+
+      const latestEntry = entries.reduce((latest, current) => {
+        if (!latest) return current;
+        if (current.year > latest.year) return current;
+        if (current.year === latest.year && current.month > latest.month)
+          return current;
+        return latest;
+      }, entries[0]);
+
+      const monthlyHistory: MonthlyDataPoint[] = entries
+        .map((entry) => ({
+          year: entry.year,
+          month: entry.month,
+          revenue: entry.income,
+          tourists: entry.tourists,
+        }))
+        .sort((a, b) =>
+          a.year === b.year ? a.month - b.month : a.year - b.year
+        );
+
       provinceData[provinceName] = {
         province: provinceName,
         provinceThai: provinceName,
-        year: 2024,
-        predicted_income_million_baht: avgIncome,
-        predicted_tourism_amount_people: avgTourists,
+        year: latestEntry?.year ?? new Date().getFullYear(),
+        predicted_income_million_baht: latestEntry?.income ?? avgIncome,
+        predicted_tourism_amount_people: latestEntry?.tourists ?? avgTourists,
         trends,
-        festivalImpact: [
-          { festival: "ปกติ", impact: 1, revenue: avgIncome * 0.7 },
-          { festival: "สงกรานต์", impact: 1.5, revenue: avgIncome * 1.1 },
-          { festival: "ลอยกระทง", impact: 1.2, revenue: avgIncome * 0.85 },
-        ],
+        festivalImpact: buildFestivalImpact(monthAggregation, avgIncome),
+        monthlyHistory,
       };
     });
-    
+
     return provinceData;
   } catch (error) {
-    console.error('Error loading CSV data:', error);
+    console.error("Error loading historical CSV data:", error);
     return {};
+  }
+}
+
+export async function loadQuarterPredictions(): Promise<QuarterPrediction[]> {
+  try {
+    const response = await fetch(QUARTER_PREDICTION_PATH);
+    const csvText = await response.text();
+
+    const parsed = Papa.parse<CSVRow>(csvText, {
+      header: true,
+      skipEmptyLines: true,
+    });
+
+    return parsed.data
+      .map((row) => {
+        const provinceName = findFlaggedColumn(row, PROVINCE_PREFIX);
+        if (!provinceName) return undefined;
+
+        const tourismType =
+          row["Tourism_Type_Foreign"] === "1" ? "Foreign" : "Thai";
+
+        return {
+          province: provinceName,
+          year: resolveYear(row),
+          month: resolveMonth(row),
+          tourism_type: tourismType,
+          predicted_income_million_baht: parseNumber(
+            row["Income(Million Baht)"]
+          ),
+          predicted_tourism_amount_people: parseNumber(row["Tourism_Amount"]),
+        };
+      })
+      .filter((entry): entry is QuarterPrediction => Boolean(entry))
+      .sort(
+        (a, b) =>
+          b.predicted_income_million_baht - a.predicted_income_million_baht
+      );
+  } catch (error) {
+    console.error("Error loading prediction CSV data:", error);
+    return [];
   }
 }

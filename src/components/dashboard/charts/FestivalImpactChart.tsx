@@ -1,52 +1,82 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Sparkles } from "lucide-react";
+import type { FestivalImpact } from "@/types/tourism";
+import { COMMON_FESTIVALS } from "@/utils/festivalLogic";
+import { formatFestivalName } from "@/utils/festivalDetector";
 
 interface FestivalImpactChartProps {
-  data?: any[];
+  data?: FestivalImpact[];
+  provinceName?: string;
 }
 
-export function FestivalImpactChart({ data }: FestivalImpactChartProps) {
-  const mockData = data || [
-    { festival: "ปกติ", revenue: 450 },
-    { festival: "สงกรานต์", revenue: 680 },
-    { festival: "เทศกาลดอกไม้", revenue: 520 },
-  ];
+export function FestivalImpactChart({
+  data,
+  provinceName,
+}: FestivalImpactChartProps) {
+  const festivals = data && data.length > 0 ? data.map((d) => d.festival) : [];
+  
+  // Separate common and province-specific festivals
+  const commonFestivals = festivals.filter((f) =>
+    COMMON_FESTIVALS.some((cf) => cf.value === f)
+  );
+  const provinceSpecificFestivals = festivals.filter(
+    (f) => !COMMON_FESTIVALS.some((cf) => cf.value === f)
+  );
 
   return (
     <Card className="bg-card border-border shadow-md">
       <CardHeader>
-        <CardTitle className="text-base font-semibold">ผลกระทบของเทศกาลต่อรายได้</CardTitle>
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-secondary" />
+          Festivals in this period ({provinceName ?? "selected province"})
+        </CardTitle>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={mockData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis 
-              dataKey="festival" 
-              stroke="hsl(var(--muted-foreground))"
-              style={{ fontSize: '12px' }}
-            />
-            <YAxis 
-              stroke="hsl(var(--muted-foreground))"
-              style={{ fontSize: '12px' }}
-              label={{ value: 'รายได้ (ล้านบาท)', angle: -90, position: 'insideLeft' }}
-            />
-            <Tooltip 
-              contentStyle={{
-                backgroundColor: 'hsl(var(--popover))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-              }}
-            />
-            <Legend />
-            <Bar 
-              dataKey="revenue" 
-              fill="hsl(var(--primary))"
-              name="รายได้ (ล้านบาท)"
-              radius={[8, 8, 0, 0]}
-            />
-          </BarChart>
-        </ResponsiveContainer>
+      <CardContent className="space-y-4">
+        {festivals.length > 0 ? (
+          <>
+            {commonFestivals.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-foreground">
+                  Common Festivals:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {commonFestivals.map((festival, index) => (
+                    <Badge
+                      key={index}
+                      variant="default"
+                      className="text-sm px-3 py-1.5"
+                    >
+                      {formatFestivalName(festival)}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            {provinceSpecificFestivals.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-foreground">
+                  Province-Specific Festivals:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {provinceSpecificFestivals.map((festival, index) => (
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      className="text-sm px-3 py-1.5"
+                    >
+                      {formatFestivalName(festival)}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No festivals detected for this period.
+          </p>
+        )}
       </CardContent>
     </Card>
   );

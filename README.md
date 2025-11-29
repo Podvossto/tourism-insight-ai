@@ -1,73 +1,59 @@
-# Welcome to your Lovable project
+# Tourism Insight AI
 
-## Project info
+An interactive tourism analytics dashboard rebuilt on [Next.js](https://nextjs.org/) with the App Router, Tailwind CSS, and shadcn/ui. It visualizes historical CSV data, runs mock AI predictions, and highlights province-level insights for decision makers.
 
-**URL**: https://lovable.dev/projects/2cb9da97-48b7-4282-9d37-f7e154bde1e1
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/2cb9da97-48b7-4282-9d37-f7e154bde1e1) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Getting Started
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Install dependencies
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Start the FastAPI service (from TID_API_2 folder)
+# uvicorn app:app --reload --port 8000
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start Next.js in development mode
 npm run dev
+
+# Run production build / preview
+npm run build
+npm start
 ```
 
-**Edit a file directly in GitHub**
+Create a `.env.local` if you host the FastAPI service on a custom domain:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```
+NEXT_PUBLIC_API_URL=https://your-fastapi-host
+```
 
-**Use GitHub Codespaces**
+## Available Scripts
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- `npm run dev` – start the Next.js dev server with hot reloading.
+- `npm run build` – create an optimized production build.
+- `npm start` – serve the production build.
+- `npm run lint` – run ESLint against the entire project.
 
-## What technologies are used for this project?
+## Tech Stack
 
-This project is built with:
+- Next.js 14 (App Router, TypeScript)
+- React 18 with TanStack Query
+- Tailwind CSS + tailwindcss-animate
+- shadcn/ui + Radix primitives
+- Recharts, React Simple Maps, d3-geo
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Project Structure
 
-## How can I deploy this project?
+- `src/app` – Next.js routes, layout, and global styles.
+- `src/components` – dashboard widgets, UI kit, and shared providers.
+- `src/data` / `src/utils` – static data and CSV loader helpers, including real CSV parsers.
+- `public/data` – historical and predicted CSVs served at runtime.
 
-Simply open [Lovable](https://lovable.dev/projects/2cb9da97-48b7-4282-9d37-f7e154bde1e1) and click on Share -> Publish.
+## Data & Model Integration
 
-## Can I connect a custom domain to my Lovable project?
+- `public/data/tourism-full.csv` is the full training dataset (`TourismData_ForMultiTarget.csv`).
+- `public/data/predictions-2025-q4.csv` provides the pre-generated predictions for Sep–Dec 2025.
+- The `src/utils/csvLoader.ts` module aggregates these CSVs into province-level insights for the UI.
+- Real-time predictions are powered by the FastAPI service in `TID_API_2/app.py` (MultiOutputRegressor + StandardScaler). Update the `.env.local` base URL if the API is not running on `http://127.0.0.1:8000`.
 
-Yes, you can!
+## Deployment
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+The project is compatible with any platform that supports Next.js (Vercel, Netlify, Render, etc.). Build with `npm run build` and deploy the `.next` output according to your platform’s instructions.
