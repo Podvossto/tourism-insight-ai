@@ -34,10 +34,18 @@ export default function DatasetPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProvince, setSelectedProvince] = useState<string>("all");
-  const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
-  const [selectedMonth, setSelectedMonth] = useState<number | undefined>(undefined);
-  const [selectedTourismType, setSelectedTourismType] = useState<"Thai" | "Foreign" | "All">("All");
-  const [selectedHighSeason, setSelectedHighSeason] = useState<"all" | "yes" | "no">("all");
+  const [selectedYear, setSelectedYear] = useState<number | undefined>(
+    undefined
+  );
+  const [selectedMonth, setSelectedMonth] = useState<number | undefined>(
+    undefined
+  );
+  const [selectedTourismType, setSelectedTourismType] = useState<
+    "Thai" | "Foreign" | "All"
+  >("All");
+  const [selectedHighSeason, setSelectedHighSeason] = useState<
+    "all" | "yes" | "no"
+  >("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
 
@@ -92,7 +100,15 @@ export default function DatasetPage() {
     }
 
     return filtered;
-  }, [rawData, selectedProvince, selectedYear, selectedMonth, selectedTourismType, selectedHighSeason, searchQuery]);
+  }, [
+    rawData,
+    selectedProvince,
+    selectedYear,
+    selectedMonth,
+    selectedTourismType,
+    selectedHighSeason,
+    searchQuery,
+  ]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -100,7 +116,6 @@ export default function DatasetPage() {
   }, [filteredData, currentPage]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-
 
   if (loading) {
     return (
@@ -121,7 +136,9 @@ export default function DatasetPage() {
         <main className="container mx-auto px-4 py-8">
           <Card>
             <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground">Loading dataset...</p>
+              <p className="text-center text-muted-foreground">
+                Loading dataset...
+              </p>
             </CardContent>
           </Card>
         </main>
@@ -154,14 +171,14 @@ export default function DatasetPage() {
       <main className="container mx-auto px-4 py-8 space-y-6">
         {/* Filters */}
         <Card className="p-4 bg-card border-border">
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-row gap-4 items-center overflow-x-auto">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <Label className="font-semibold">Filters:</Label>
             </div>
 
-            <div className="flex flex-wrap gap-4 items-center flex-1">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="search" className="text-sm">
+            <div className="flex flex-row gap-4 items-center flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Label htmlFor="search" className="text-sm whitespace-nowrap">
                   Search:
                 </Label>
                 <Input
@@ -172,12 +189,12 @@ export default function DatasetPage() {
                     setSearchQuery(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-48"
+                  className="w-40"
                 />
               </div>
 
-              <div className="flex items-center gap-2">
-                <Label htmlFor="province" className="text-sm">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Label htmlFor="province" className="text-sm whitespace-nowrap">
                   Province:
                 </Label>
                 <Select
@@ -187,7 +204,7 @@ export default function DatasetPage() {
                     setCurrentPage(1);
                   }}
                 >
-                  <SelectTrigger id="province" className="w-40">
+                  <SelectTrigger id="province" className="w-36">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -201,18 +218,20 @@ export default function DatasetPage() {
                 </Select>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Label htmlFor="year" className="text-sm">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Label htmlFor="year" className="text-sm whitespace-nowrap">
                   Year:
                 </Label>
                 <Select
                   value={selectedYear?.toString() ?? "all"}
                   onValueChange={(value) => {
-                    setSelectedYear(value === "all" ? undefined : parseInt(value, 10));
+                    setSelectedYear(
+                      value === "all" ? undefined : parseInt(value, 10)
+                    );
                     setCurrentPage(1);
                   }}
                 >
-                  <SelectTrigger id="year" className="w-32">
+                  <SelectTrigger id="year" className="w-28">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -224,24 +243,29 @@ export default function DatasetPage() {
                 </Select>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Label htmlFor="month" className="text-sm">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Label htmlFor="month" className="text-sm whitespace-nowrap">
                   Month:
                 </Label>
                 <Select
                   value={selectedMonth?.toString() ?? "all"}
                   onValueChange={(value) => {
-                    setSelectedMonth(value === "all" ? undefined : parseInt(value, 10));
+                    setSelectedMonth(
+                      value === "all" ? undefined : parseInt(value, 10)
+                    );
                     setCurrentPage(1);
                   }}
                 >
-                  <SelectTrigger id="month" className="w-32">
+                  <SelectTrigger id="month" className="w-28">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Months</SelectItem>
                     {MONTHS.map((month) => (
-                      <SelectItem key={month.value} value={month.value.toString()}>
+                      <SelectItem
+                        key={month.value}
+                        value={month.value.toString()}
+                      >
                         {month.label}
                       </SelectItem>
                     ))}
@@ -249,8 +273,11 @@ export default function DatasetPage() {
                 </Select>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Label htmlFor="tourismType" className="text-sm">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Label
+                  htmlFor="tourismType"
+                  className="text-sm whitespace-nowrap"
+                >
                   Type:
                 </Label>
                 <Select
@@ -260,7 +287,7 @@ export default function DatasetPage() {
                     setCurrentPage(1);
                   }}
                 >
-                  <SelectTrigger id="tourismType" className="w-32">
+                  <SelectTrigger id="tourismType" className="w-28">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -271,8 +298,11 @@ export default function DatasetPage() {
                 </Select>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Label htmlFor="highSeason" className="text-sm">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Label
+                  htmlFor="highSeason"
+                  className="text-sm whitespace-nowrap"
+                >
                   High Season:
                 </Label>
                 <Select
@@ -282,7 +312,7 @@ export default function DatasetPage() {
                     setCurrentPage(1);
                   }}
                 >
-                  <SelectTrigger id="highSeason" className="w-32">
+                  <SelectTrigger id="highSeason" className="w-28">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -318,7 +348,9 @@ export default function DatasetPage() {
                     <TableHead>Month</TableHead>
                     <TableHead>Tourism Type</TableHead>
                     <TableHead>High Season</TableHead>
-                    <TableHead className="text-right">Income (M Baht)</TableHead>
+                    <TableHead className="text-right">
+                      Income (M Baht)
+                    </TableHead>
                     <TableHead className="text-right">Tourism Amount</TableHead>
                     <TableHead>Festivals</TableHead>
                   </TableRow>
@@ -326,7 +358,10 @@ export default function DatasetPage() {
                 <TableBody>
                   {paginatedData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground">
+                      <TableCell
+                        colSpan={8}
+                        className="text-center text-muted-foreground"
+                      >
                         No data found
                       </TableCell>
                     </TableRow>
@@ -334,15 +369,23 @@ export default function DatasetPage() {
                     paginatedData.map((row, index) => {
                       const isHigh = isHighSeason(row.province, row.month);
                       return (
-                        <TableRow key={`${row.province}-${row.year}-${row.month}-${row.tourismType}-${index}`}>
-                          <TableCell className="font-medium">{row.province}</TableCell>
+                        <TableRow
+                          key={`${row.province}-${row.year}-${row.month}-${row.tourismType}-${index}`}
+                        >
+                          <TableCell className="font-medium">
+                            {row.province}
+                          </TableCell>
                           <TableCell>{row.year}</TableCell>
                           <TableCell>
-                            {MONTHS.find((m) => m.value === row.month)?.label || row.month}
+                            {MONTHS.find((m) => m.value === row.month)?.label ||
+                              row.month}
                           </TableCell>
                           <TableCell>{row.tourismType}</TableCell>
                           <TableCell>
-                            <Badge variant={isHigh ? "default" : "outline"} className={isHigh ? "bg-primary" : ""}>
+                            <Badge
+                              variant={isHigh ? "default" : "outline"}
+                              className={isHigh ? "bg-primary" : ""}
+                            >
                               {isHigh ? "Yes" : "No"}
                             </Badge>
                           </TableCell>
@@ -371,7 +414,9 @@ export default function DatasetPage() {
                                 )}
                               </div>
                             ) : (
-                              <span className="text-xs text-muted-foreground">None</span>
+                              <span className="text-xs text-muted-foreground">
+                                None
+                              </span>
                             )}
                           </TableCell>
                         </TableRow>
@@ -388,7 +433,9 @@ export default function DatasetPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
                   disabled={currentPage === 1}
                 >
                   Previous
@@ -399,7 +446,9 @@ export default function DatasetPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
                   disabled={currentPage === totalPages}
                 >
                   Next
@@ -412,4 +461,3 @@ export default function DatasetPage() {
     </>
   );
 }
-

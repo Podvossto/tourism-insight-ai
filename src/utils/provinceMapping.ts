@@ -120,3 +120,30 @@ export function getThaiProvinceName(mapName: string): string {
   return thaiName || mapName;
 }
 
+/**
+ * Get English province name from Thai name or English name
+ * Always returns English name for display
+ */
+export function getEnglishProvinceName(provinceName: string): string {
+  // If already English (exists in REVERSE_PROVINCE_MAP values), return as is
+  if (REVERSE_PROVINCE_MAP[provinceName]) {
+    return provinceName;
+  }
+  
+  // If Thai name, convert to English
+  const englishName = getMapProvinceName(provinceName);
+  
+  // If conversion failed, check if it's already English
+  if (englishName === provinceName) {
+    // Check if it's a variation
+    for (const [variation, standard] of Object.entries(PROVINCE_NAME_VARIATIONS)) {
+      if (variation === provinceName || standard === provinceName) {
+        return standard;
+      }
+    }
+    return provinceName; // Return as is if no mapping found
+  }
+  
+  return englishName;
+}
+

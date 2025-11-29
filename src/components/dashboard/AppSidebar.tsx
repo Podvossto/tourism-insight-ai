@@ -2,15 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Brain,
-  Database,
-  Calendar,
-  LayoutDashboard,
-  GitCompare,
-  BarChart3,
-  Map,
-} from "lucide-react";
+import { Brain, Database, Calendar, LayoutDashboard, Eye } from "lucide-react";
 
 import {
   Sidebar,
@@ -39,21 +31,9 @@ const menuItems = [
     category: "Navigation",
   },
   {
-    title: "Stats",
-    url: "/stats",
-    icon: BarChart3,
-    category: "Navigation",
-  },
-  {
-    title: "Heatmap",
-    url: "/heatmap",
-    icon: Map,
-    category: "Navigation",
-  },
-  {
-    title: "Comparison & Analysis",
-    url: "/comparison-analysis",
-    icon: GitCompare,
+    title: "Looker",
+    url: "/looker",
+    icon: Eye,
     category: "Navigation",
   },
 ];
@@ -80,8 +60,8 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-2 py-3 group-data-[collapsible=icon]:justify-center">
-          <div className="group-data-[collapsible=icon]:hidden">
-            <TIDLogo size="sm" showText={true} />
+          <div className="group-data-[collapsible=icon]:hidden flex justify-center w-full">
+            <TIDLogo size="md" showText={false} />
           </div>
           <div className="hidden group-data-[collapsible=icon]:block">
             <TIDLogo size="sm" showText={false} />

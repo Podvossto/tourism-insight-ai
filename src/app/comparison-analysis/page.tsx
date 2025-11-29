@@ -12,7 +12,11 @@ export default function ComparisonAnalysisPage() {
         <div className="flex h-16 items-center gap-4 px-4">
           <SidebarTrigger />
           <div className="flex items-center gap-3 flex-1">
-            <TIDLogo size="sm" showText={false} />
+            <div
+              style={{ transform: "scale(0.6)", transformOrigin: "left" }}
+            >
+              <TIDLogo showText={false} />
+            </div>
             <h1 className="text-xl font-bold text-foreground">
               Tourism Insight AI — Comparison & Analysis
             </h1>
@@ -30,8 +34,12 @@ export default function ComparisonAnalysisPage() {
         <Card className="p-8 bg-card border-border shadow-lg">
           <CardContent className="pt-6">
             <div className="text-center text-muted-foreground">
-              <h2 className="text-2xl font-bold mb-4 text-foreground">Comparison & Analysis</h2>
-              <p className="text-sm">Comparison and analysis tools will be displayed here.</p>
+              <h2 className="text-2xl font-bold mb-4 text-foreground">
+                Comparison & Analysis
+              </h2>
+              <p className="text-sm">
+                Comparison and analysis tools will be displayed here.
+              </p>
             </div>
           </CardContent>
         </Card>

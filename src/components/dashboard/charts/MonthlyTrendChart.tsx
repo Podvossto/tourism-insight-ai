@@ -25,12 +25,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MONTHS } from "@/data/provinces";
-import type { MonthlyDataPoint } from "@/types/tourism";
+import type { MonthlyDataPoint, TourismDataRow } from "@/types/tourism";
+import {
+  getFestivalsForProvinceAndMonth,
+  formatFestivalName,
+} from "@/utils/festivalDetector";
+import {
+  COMMON_FESTIVALS,
+  getProvinceSpecificFestivals,
+} from "@/utils/festivalLogic";
+import { getEnglishProvinceName } from "@/utils/provinceMapping";
 
 interface MonthlyTrendChartProps {
   data: MonthlyDataPoint[];
   provinceName?: string;
   tourismType?: "Thai" | "Foreign"; // Tourism type for the chart
+  defaultYear?: number; // Default year from parent filter
+  showCompareYear?: boolean; // Show compare year selector (default: true)
+  rawData?: TourismDataRow[]; // Raw data for festival detection
 }
 
 const monthLabels = MONTHS.map((month) => ({
@@ -42,10 +54,15 @@ export function MonthlyTrendChart({
   data,
   provinceName,
   tourismType,
+  defaultYear,
+  showCompareYear = true,
+  rawData = [],
 }: MonthlyTrendChartProps) {
   const [chartType, setChartType] = useState<"line" | "combo">("line");
   const [metric, setMetric] = useState<"revenue" | "tourists">("revenue");
-  const [selectedYear, setSelectedYear] = useState<number | undefined>();
+  const [selectedYear, setSelectedYear] = useState<number | undefined>(
+    defaultYear
+  );
   const [selectedTourismType, setSelectedTourismType] = useState<
     "Thai" | "Foreign" | "All"
   >(tourismType || "All");
@@ -56,6 +73,14 @@ export function MonthlyTrendChart({
       setSelectedTourismType(tourismType);
     }
   }, [tourismType]);
+
+  // Update selectedYear when defaultYear prop changes
+  useEffect(() => {
+    if (defaultYear !== undefined) {
+      setSelectedYear(defaultYear);
+    }
+  }, [defaultYear]);
+
   const [compareYear, setCompareYear] = useState<number | undefined>(undefined);
 
   // Check if both Thai and Foreign data exist
@@ -82,10 +107,10 @@ export function MonthlyTrendChart({
   }, [data]);
 
   useEffect(() => {
-    if (yearOptions.length > 0 && !selectedYear) {
+    if (yearOptions.length > 0 && !selectedYear && defaultYear === undefined) {
       setSelectedYear(yearOptions[yearOptions.length - 1]);
     }
-  }, [yearOptions, selectedYear]);
+  }, [yearOptions, selectedYear, defaultYear]);
 
   const chartData = useMemo(() => {
     // Filter by tourism type if not "All"
@@ -212,8 +237,20 @@ export function MonthlyTrendChart({
       const isPredictedMonth =
         value > lastActualMonth && actualRevenue === null && predictedRevenue !== null;
 
+      // Get festivals for this month
+      let festivals: string[] = [];
+      if (rawData.length > 0 && provinceName && selectedYear) {
+        festivals = getFestivalsForProvinceAndMonth(
+          rawData,
+          provinceName,
+          value,
+          selectedYear
+        );
+      }
+
       return {
         month: label,
+        monthValue: value,
         actualRevenue,
         actualTourists,
         predictedRevenue: predictedRevenueWithConnection,
@@ -231,13 +268,14 @@ export function MonthlyTrendChart({
         // Combined for backward compatibility
         revenue: actualRevenue ?? predictedRevenue ?? 0,
         tourists: actualTourists ?? predictedTourists ?? 0,
+        festivals, // Add festivals data
       };
     });
-  }, [data, selectedYear, selectedTourismType]);
+  }, [data, selectedYear, selectedTourismType, rawData, provinceName]);
 
   // Calculate compare year data if compareYear is selected
   const compareYearData = useMemo(() => {
-    if (!compareYear || chartType !== "line") return null;
+    if (!compareYear || chartType !== "line" || !showCompareYear) return null;
 
     // Filter by tourism type if not "All"
     let filteredByType = data;
@@ -283,7 +321,7 @@ export function MonthlyTrendChart({
           : null,
       };
     });
-  }, [data, compareYear, selectedTourismType, chartType]);
+  }, [data, compareYear, selectedTourismType, chartType, showCompareYear]);
 
   // Merge compare year data into chartData
   const chartDataWithCompare = useMemo(() => {
@@ -305,7 +343,11 @@ export function MonthlyTrendChart({
       <Card className="bg-card border-border shadow-md">
         <CardHeader>
           <CardTitle className="text-base font-semibold">
-            Monthly Trend ({provinceName ?? "Selected Province"})
+            Monthly Trend (
+            {provinceName
+              ? getEnglishProvinceName(provinceName)
+              : "Selected Province"}
+            )
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -321,7 +363,11 @@ export function MonthlyTrendChart({
     <Card className="bg-card border-border shadow-md">
       <CardHeader className="space-y-3">
         <CardTitle className="text-base font-semibold">
-          Monthly Trend ({provinceName ?? "Selected Province"})
+          Monthly Trend (
+          {provinceName
+            ? getEnglishProvinceName(provinceName)
+            : "Selected Province"}
+          )
         </CardTitle>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -386,31 +432,7 @@ export function MonthlyTrendChart({
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-sm">Year</Label>
-              <Select
-                value={selectedYear?.toString() ?? "all"}
-                onValueChange={(value) =>
-                  setSelectedYear(
-                    value === "all" ? undefined : parseInt(value, 10)
-                  )
-                }
-                disabled={isYearDisabled}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Years</SelectItem>
-                  {yearOptions.map((year) => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {chartType === "line" && (
+            {chartType === "line" && showCompareYear && (
               <div className="flex items-center gap-2">
                 <Label className="text-sm">Compare Year</Label>
                 <Select
@@ -426,9 +448,7 @@ export function MonthlyTrendChart({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {yearOptions
-                      .filter((year) => year !== selectedYear)
-                      .map((year) => (
+                    {yearOptions.map((year) => (
                         <SelectItem key={year} value={year.toString()}>
                           {year}
                         </SelectItem>
@@ -528,7 +548,7 @@ export function MonthlyTrendChart({
                 );
               })()}
               {/* Compare year line (if compareYear is selected) */}
-              {compareYear && (
+              {compareYear && showCompareYear && (
                 <Line
                   type="monotone"
                   dataKey={
@@ -585,23 +605,108 @@ export function MonthlyTrendChart({
                 }
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-                formatter={(value: number, name: string) => {
-                  if (name === "Visitors") {
-                    return `${(value / 1_000_000).toLocaleString("en-US", {
+                content={({ active, payload }) => {
+                  if (!active || !payload || payload.length === 0) return null;
+                  
+                  const data = payload[0].payload;
+                  const festivals = data?.festivals || [];
+                  const monthValue = data?.monthValue;
+                  
+                  // Separate common and province-specific festivals
+                  const commonFestivalValues = new Set(
+                    COMMON_FESTIVALS.map((f) => f.value)
+                  );
+                  const provinceSpecificFestivals = getProvinceSpecificFestivals(
+                    provinceName || ""
+                  );
+                  const provinceSpecificFestivalValues = new Set(
+                    provinceSpecificFestivals.map((f) => f.value)
+                  );
+
+                  const commonFestivals = festivals.filter((f: string) =>
+                    commonFestivalValues.has(f)
+                  );
+                  const provinceSpecific = festivals.filter((f: string) =>
+                    provinceSpecificFestivalValues.has(f)
+                  );
+
+                  return (
+                    <div className="bg-popover border border-border rounded-lg p-4 shadow-lg max-w-sm">
+                      <div className="mb-3">
+                        <p className="font-semibold text-foreground mb-2">
+                          {data?.month}
+                        </p>
+                        {payload.map((entry, index) => {
+                          if (!entry.value) return null;
+                          const value = entry.value as number;
+                          const name = entry.name as string;
+                          let formattedValue = "";
+                          if (name === "Visitors" || name.includes("Visitors")) {
+                            formattedValue = `${(value / 1_000_000).toLocaleString("en-US", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })} million people`;
-                  } else if (name === "Revenue") {
-                    return `${value.toLocaleString("en-US", {
+                          } else if (name === "Revenue" || name.includes("Revenue")) {
+                            formattedValue = `${value.toLocaleString("en-US", {
                       maximumFractionDigits: 0,
                     })} million Baht`;
-                  }
-                  return value;
+                          } else {
+                            formattedValue = value.toString();
+                          }
+                          return (
+                            <div key={index} className="text-sm">
+                              <span className="text-muted-foreground">{name}:</span>{" "}
+                              <span className="font-semibold text-foreground">
+                                {formattedValue}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {festivals.length > 0 && (
+                        <div className="border-t border-border pt-3 space-y-2">
+                          {commonFestivals.length > 0 && (
+                            <div>
+                              <p className="text-xs font-semibold text-foreground mb-1">
+                                Common Festivals:
+                              </p>
+                              <ul className="text-xs text-muted-foreground space-y-0.5">
+                                {commonFestivals.map((festival: string) => (
+                                  <li key={festival}>
+                                    {formatFestivalName(festival)}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {provinceSpecific.length > 0 && (
+                            <div>
+                              <p className="text-xs font-semibold text-foreground mb-1">
+                                Province-Specific Festivals:
+                              </p>
+                              <ul className="text-xs text-muted-foreground space-y-0.5">
+                                {provinceSpecific.map((festival: string) => (
+                                  <li key={festival}>
+                                    {formatFestivalName(festival)}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          <p className="text-xs text-muted-foreground pt-1 border-t border-border">
+                            ✓ {festivals.length} festival
+                            {festivals.length !== 1 ? "s" : ""} detected for{" "}
+                            {provinceName
+                              ? getEnglishProvinceName(provinceName)
+                              : "this province"}{" "}
+                            in{" "}
+                            {MONTHS.find((m) => m.value === monthValue)?.label ||
+                              data?.month}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
                 }}
               />
               <Legend />
@@ -649,7 +754,7 @@ export function MonthlyTrendChart({
         </ResponsiveContainer>
         
         {/* Comparison Stats - Show by Month */}
-        {compareYear && chartType === "line" && (
+        {compareYear && chartType === "line" && showCompareYear && (
           <div className="mt-6 p-4 bg-accent/30 rounded-lg border border-border">
             <h4 className="text-sm font-semibold mb-3 text-foreground">
               Year Comparison: {selectedYear} vs {compareYear}

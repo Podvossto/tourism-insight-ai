@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   title: "Tourism Predictor AI",
   description:
     "Predict tourism outcomes across Thailand with interactive insights.",
+  icons: {
+    icon: "/TID_Logo.png",
+    shortcut: "/TID_Logo.png",
+    apple: "/TID_Logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

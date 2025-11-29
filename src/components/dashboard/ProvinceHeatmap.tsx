@@ -1,8 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
-import { ComposableMap, Geographies, Geography } from "react-simple-maps";
+import { useState, useMemo } from "react";
+import {
+  ComposableMap,
+  Geographies,
+  Geography,
+  ZoomableGroup,
+} from "react-simple-maps";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   HoverCard,
   HoverCardContent,
@@ -13,7 +19,7 @@ import {
   getMapProvinceName,
   getThaiProvinceName,
 } from "@/utils/provinceMapping";
-import { TrendingUp, Users } from "lucide-react";
+import { TrendingUp, Users, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 
 const THAILAND_TOPO_JSON =
   "https://raw.githubusercontent.com/apisit/thailand.json/master/thailand.json";
@@ -33,6 +39,32 @@ export function ProvinceHeatmap({
   selectedProvince,
   onProvinceClick,
 }: ProvinceHeatmapProps) {
+  const [position, setPosition] = useState({
+    coordinates: [0, 0] as [number, number],
+    zoom: 1,
+  });
+
+  const handleMoveEnd = (position: {
+    coordinates: [number, number];
+    zoom: number;
+  }) => {
+    setPosition(position);
+  };
+
+  const handleZoomIn = () => {
+    if (position.zoom >= 4) return;
+    setPosition((pos) => ({ ...pos, zoom: pos.zoom * 1.5 }));
+  };
+
+  const handleZoomOut = () => {
+    if (position.zoom <= 1) return;
+    setPosition((pos) => ({ ...pos, zoom: pos.zoom / 1.5 }));
+  };
+
+  const handleReset = () => {
+    setPosition({ coordinates: [0, 0], zoom: 1 });
+  };
+
   // Create a map for quick lookup - map Thai names to map names
   const dataMap = useMemo(() => {
     const map = new Map<string, HeatmapDataPoint>();
@@ -94,6 +126,49 @@ export function ProvinceHeatmap({
     };
   }, [data, mode]);
 
+  // Calculate actual min/max for red scale display
+  const { actualMin, actualMax } = useMemo(() => {
+    if (data.length === 0) return { actualMin: 0, actualMax: 1 };
+
+    const values = data
+      .map((d) => d.value)
+      .filter((v) => v > 0);
+    
+    if (values.length === 0) return { actualMin: 0, actualMax: 1 };
+
+    return {
+      actualMin: Math.min(...values),
+      actualMax: Math.max(...values),
+    };
+  }, [data]);
+
+  // Calculate min/max for growth mode (positive and negative)
+  const { positiveMin, positiveMax, negativeMin, negativeMax } = useMemo(() => {
+    if (data.length === 0 || mode !== "growth")
+      return { positiveMin: 0, positiveMax: 0, negativeMin: 0, negativeMax: 0 };
+
+    const positiveValues = data
+      .map((d) => {
+        const growthValue = (d as any).growthValue;
+        return growthValue !== undefined && growthValue > 0 ? growthValue : null;
+      })
+      .filter((v): v is number => v !== null && v > 0);
+
+    const negativeValues = data
+      .map((d) => {
+        const growthValue = (d as any).growthValue;
+        return growthValue !== undefined && growthValue < 0 ? Math.abs(growthValue) : null;
+      })
+      .filter((v): v is number => v !== null && v > 0);
+
+    return {
+      positiveMin: positiveValues.length > 0 ? Math.min(...positiveValues) : 0,
+      positiveMax: positiveValues.length > 0 ? Math.max(...positiveValues) : 0,
+      negativeMin: negativeValues.length > 0 ? Math.min(...negativeValues) : 0,
+      negativeMax: negativeValues.length > 0 ? Math.max(...negativeValues) : 0,
+    };
+  }, [data, mode]);
+
   const getProvinceColor = (
     mapProvinceName: string,
     point?: HeatmapDataPoint
@@ -142,21 +217,21 @@ export function ProvinceHeatmap({
         const lightness = 85 - normalized * 20; // From 85% to 65%
         return `hsl(${hue} ${saturation}% ${lightness}%)`;
       } else if (numGrowthValue < 0) {
-        // Negative growth: red scale (แดง)
+        // Negative growth: red scale (แดง) - darker
         const hue = 0; // Red
-        const saturation = 50 + normalized * 30; // From 50% to 80%
-        const lightness = 85 - normalized * 20; // From 85% to 65%
+        const saturation = 60 + normalized * 25; // From 60% to 85%
+        const lightness = 75 - normalized * 25; // From 75% to 50% (darker)
         return `hsl(${hue} ${saturation}% ${lightness}%)`;
       } else {
         // Zero growth: neutral color
         return "hsl(var(--muted))";
       }
     } else {
-      // For volume: use soft green color scale - gentle on the eyes
-      // Higher values = slightly darker but still soft
+      // For volume: use soft green color scale - darker
+      // Higher values = darker
       const hue = 140; // Soft green
-      const saturation = 30 + normalized * 20; // From 30% to 50% saturation (soft)
-      const lightness = 92 - normalized * 15; // From 92% (very light) to 77% (still light)
+      const saturation = 40 + normalized * 30; // From 40% to 70% saturation (more vibrant)
+      const lightness = 80 - normalized * 25; // From 80% to 55% (darker)
       return `hsl(${hue} ${saturation}% ${lightness}%)`;
     }
   };
@@ -195,7 +270,7 @@ export function ProvinceHeatmap({
           </p>
         </div>
 
-        <div className="relative w-full h-[500px] bg-accent/20 rounded-lg overflow-hidden border border-border/50 shadow-inner">
+        <div className="relative w-full h-[500px] bg-accent/20 rounded-lg overflow-hidden border border-border/50 shadow-inner transition-all duration-300 hover:shadow-lg">
           <ComposableMap
             projection="geoMercator"
             projectionConfig={{
@@ -204,7 +279,12 @@ export function ProvinceHeatmap({
             }}
             className="w-full h-full"
           >
-            <Geographies geography={THAILAND_TOPO_JSON}>
+            <ZoomableGroup
+              zoom={position.zoom}
+              center={position.coordinates}
+              onMoveEnd={handleMoveEnd}
+            >
+              <Geographies geography={THAILAND_TOPO_JSON}>
               {({ geographies }) => {
                 // Debug: log first few province names from map
                 if (geographies.length > 0 && data.length > 0) {
@@ -373,7 +453,41 @@ export function ProvinceHeatmap({
                 });
               }}
             </Geographies>
+            </ZoomableGroup>
           </ComposableMap>
+
+          {/* Zoom Controls */}
+          <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 bg-background/90 backdrop-blur-md hover:bg-background shadow-md"
+              onClick={handleZoomIn}
+              disabled={position.zoom >= 4}
+              title="Zoom In"
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 bg-background/90 backdrop-blur-md hover:bg-background shadow-md"
+              onClick={handleZoomOut}
+              disabled={position.zoom <= 1}
+              title="Zoom Out"
+            >
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 bg-background/90 backdrop-blur-md hover:bg-background shadow-md"
+              onClick={handleReset}
+              title="Reset View"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          </div>
 
           {/* Tooltip hint */}
           <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-md px-4 py-2 rounded-lg border border-border/50 shadow-lg">
@@ -389,6 +503,8 @@ export function ProvinceHeatmap({
         </div>
 
         {/* Legend */}
+        <div className="space-y-2">
+          {/* Green Scale */}
         <div className="flex items-center justify-center gap-4 text-xs flex-wrap">
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">Low:</span>
@@ -407,7 +523,9 @@ export function ProvinceHeatmap({
           <div className="text-muted-foreground">
             Min:{" "}
             {mode === "growth"
-              ? `${min.toFixed(2)}%`
+                ? positiveMin > 0
+                  ? `${positiveMin.toFixed(2)}%`
+                  : "N/A"
               : `${min.toLocaleString("en-US", {
                   maximumFractionDigits: 0,
                 })} ${metric === "income" ? "million Baht" : "people"}`}
@@ -415,11 +533,53 @@ export function ProvinceHeatmap({
           <div className="text-muted-foreground">
             Max:{" "}
             {mode === "growth"
-              ? `${max.toFixed(2)}%`
+                ? positiveMax > 0
+                  ? `${positiveMax.toFixed(2)}%`
+                  : "N/A"
               : `${max.toLocaleString("en-US", {
                   maximumFractionDigits: 0,
                 })} ${metric === "income" ? "million Baht" : "people"}`}
           </div>
+          </div>
+          {/* Red Scale - Show for volume mode with income metric OR growth mode */}
+          {(mode === "volume" && metric === "income") || mode === "growth" ? (
+            <div className="flex items-center justify-center gap-4 text-xs flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">Low:</span>
+                <div
+                  className="w-4 h-4 rounded shadow-sm"
+                  style={{ backgroundColor: `hsl(0 60% 75%)` }}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">High:</span>
+                <div
+                  className="w-4 h-4 rounded shadow-sm"
+                  style={{ backgroundColor: `hsl(0 85% 50%)` }}
+                />
+              </div>
+              <div className="text-muted-foreground">
+                Min:{" "}
+                {mode === "growth"
+                  ? negativeMin > 0
+                    ? `${negativeMin.toFixed(2)}%`
+                    : "N/A"
+                  : `${actualMin.toLocaleString("en-US", {
+                      maximumFractionDigits: 0,
+                    })} million Baht`}
+              </div>
+              <div className="text-muted-foreground">
+                Max:{" "}
+                {mode === "growth"
+                  ? negativeMax > 0
+                    ? `${negativeMax.toFixed(2)}%`
+                    : "N/A"
+                  : `${actualMax.toLocaleString("en-US", {
+                      maximumFractionDigits: 0,
+                    })} million Baht`}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </Card>

@@ -32,6 +32,7 @@ import {
 import {
   getThaiProvinceName,
   getMapProvinceName,
+  getEnglishProvinceName,
 } from "@/utils/provinceMapping";
 
 const THAILAND_TOPO_JSON =
@@ -80,7 +81,7 @@ export function ThailandMap({
 
   const getProvinceColor = (provinceName: string) => {
     if (!provinceData) {
-      return "hsl(var(--muted))";
+      return "hsl(0 0% 85%)"; // Lighter gray for better visibility
     }
 
     // Try to get data by multiple lookup strategies
@@ -113,17 +114,17 @@ export function ThailandMap({
     }
 
     if (!data) {
-      return "hsl(var(--muted))";
+      return "hsl(0 0% 90%)"; // Lighter gray for better visibility
     }
 
     const income = data.predicted_income_million_baht;
 
-    // Use more vibrant colors with higher saturation for better visibility
-    if (income > 60000) return "hsl(165 100% 30%)";
-    if (income > 40000) return "hsl(165 100% 38%)";
-    if (income > 20000) return "hsl(165 90% 45%)";
-    if (income > 10000) return "hsl(165 70% 55%)";
-    return "hsl(165 50% 70%)";
+    // Use darker, more vibrant colors with higher saturation for better visibility
+    if (income > 60000) return "hsl(165 100% 25%)";
+    if (income > 40000) return "hsl(165 100% 32%)";
+    if (income > 20000) return "hsl(165 95% 38%)";
+    if (income > 10000) return "hsl(165 80% 48%)";
+    return "hsl(165 60% 60%)";
   };
 
   return (
@@ -241,14 +242,14 @@ export function ThailandMap({
                                 stroke:
                                   isSelected || isInMultiSelect
                                     ? "hsl(142, 71%, 45%)" // Green color
-                                    : "hsl(var(--border))",
+                                    : "hsl(0 0% 40%)", // Darker gray border for better visibility
                                 strokeWidth:
-                                  isSelected || isInMultiSelect ? 3 : 0.8,
+                                  isSelected || isInMultiSelect ? 3 : 1.2, // Thicker border
                                 outline: "none",
                                 transition:
                                   "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                                 opacity:
-                                  isSelected || isInMultiSelect ? 1 : 0.95,
+                                  isSelected || isInMultiSelect ? 1 : 1, // Full opacity
                               },
                               hover: {
                                 fill:
@@ -287,7 +288,9 @@ export function ThailandMap({
                                 <MapPin className="h-4 w-4 text-primary" />
                               </div>
                               <h4 className="font-bold text-lg text-foreground">
-                                {data?.provinceThai || thaiName || provinceName}
+                                {getEnglishProvinceName(
+                                  data?.provinceThai || thaiName || provinceName
+                                )}
                               </h4>
                             </div>
                             {data ? (

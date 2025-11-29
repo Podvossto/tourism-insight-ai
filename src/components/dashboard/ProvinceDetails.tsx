@@ -20,7 +20,9 @@ import {
   getMonthlyDataForProvince,
   loadTourismData,
 } from "@/utils/tourismDataLoader";
+import type { TourismDataRow } from "@/types/tourism";
 import { MONTHS } from "@/data/provinces";
+import { getEnglishProvinceName } from "@/utils/provinceMapping";
 
 interface ProvinceDetailsProps {
   province?: ProvinceData;
@@ -39,6 +41,18 @@ export function ProvinceDetails({
   >([]);
   const [compareTourismType, setCompareTourismType] = useState<boolean>(false);
   const [selectedMonth, setSelectedMonth] = useState<number | undefined>();
+  const [rawData, setRawData] = useState<TourismDataRow[]>([]);
+
+  // Load raw data for festival detection
+  useEffect(() => {
+    loadTourismData()
+      .then((data) => {
+        setRawData(data);
+      })
+      .catch((error) => {
+        console.error("Failed to load tourism data:", error);
+      });
+  }, []);
 
   useEffect(() => {
     if (!comparisonMode || !province?.monthlyHistory) return;
@@ -104,9 +118,9 @@ export function ProvinceDetails({
               return d.tourism_type || province.tourism_type;
             })
             .map((d) => ({
-              ...d,
-              tourism_type: d.tourism_type || province.tourism_type,
-            })) || [];
+            ...d,
+            tourism_type: d.tourism_type || province.tourism_type,
+          })) || [];
 
         // Combine and sort by year, then month
         const combined = [...actualDataMarked, ...predictedData].sort(
@@ -128,9 +142,9 @@ export function ProvinceDetails({
               return d.tourism_type || province.tourism_type;
             })
             .map((d) => ({
-              ...d,
+            ...d,
               tourism_type: d.tourism_type || province.tourism_type,
-            })) || []
+          })) || []
         );
       }
     };
@@ -153,7 +167,9 @@ export function ProvinceDetails({
     );
   }
 
-  const provinceLabel = province.provinceThai || province.province;
+  const provinceLabel = getEnglishProvinceName(
+    province.provinceThai || province.province
+  );
   // Revenue per visitor: income is in million Baht, tourism amount is in people
   // So we need to convert income to Baht (multiply by 1,000,000) then divide by people
   const incomePerVisitor =
@@ -455,12 +471,14 @@ export function ProvinceDetails({
               data={combinedMonthlyData}
               provinceName={provinceLabel}
               tourismType={province.tourism_type}
+              rawData={rawData}
             />
           ) : province.monthlyHistory && province.monthlyHistory.length > 0 ? (
             <MonthlyTrendChart
               data={province.monthlyHistory}
               provinceName={provinceLabel}
               tourismType={province.tourism_type}
+              rawData={rawData}
             />
           ) : (
             <div className="text-center text-muted-foreground py-8">

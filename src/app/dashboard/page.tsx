@@ -21,37 +21,32 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProvinceHeatmap } from "@/components/dashboard/ProvinceHeatmap";
 import { DashboardSummaryCards } from "@/components/dashboard/DashboardSummaryCards";
+import { MonthlyTrendChart } from "@/components/dashboard/charts/MonthlyTrendChart";
 import {
   loadTourismData,
   aggregateHeatmapData,
+  getMonthlyDataForProvince,
 } from "@/utils/tourismDataLoader";
 import {
   getThaiProvinceName,
   getMapProvinceName,
+  getEnglishProvinceName,
 } from "@/utils/provinceMapping";
 import {
   getFestivalsForProvinceAndMonth,
   formatFestivalName,
 } from "@/utils/festivalDetector";
 import { MONTHS } from "@/data/provinces";
-import type { TourismDataRow, HeatmapDataPoint } from "@/types/tourism";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  ReferenceLine,
-} from "recharts";
+import type {
+  TourismDataRow,
+  HeatmapDataPoint,
+  MonthlyDataPoint,
+} from "@/types/tourism";
+// Removed unused chart imports (PieChart, LineChart, etc.)
 
 interface ProvinceRanking {
   province: string;
@@ -70,7 +65,7 @@ export default function DashboardPage() {
   const [heatmapData, setHeatmapData] = useState<HeatmapDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProvince, setSelectedProvince] = useState<string>("");
-  const [modalOpen, setModalOpen] = useState(false);
+  const [monthlyData, setMonthlyData] = useState<MonthlyDataPoint[]>([]);
 
   // Filters
   const [year, setYear] = useState<number>(2024);
@@ -81,6 +76,7 @@ export default function DashboardPage() {
   const [selectedRankingItem, setSelectedRankingItem] =
     useState<ProvinceRanking | null>(null);
   const [rankingModalOpen, setRankingModalOpen] = useState(false);
+  const [provinceDetailModalOpen, setProvinceDetailModalOpen] = useState(false);
 
   useEffect(() => {
     loadTourismData()
@@ -261,47 +257,7 @@ export default function DashboardPage() {
     return { topPerformers, risingStars };
   }, [heatmapData, provinceGrowthData, provinceDifferenceData]);
 
-  // Calculate nationwide monthly totals
-  const nationwideTrend = useMemo(() => {
-    if (rawData.length === 0) return [];
-
-    const monthMap = new Map<
-      string,
-      { revenue: number; tourists: number; year: number; month: number }
-    >();
-
-    rawData.forEach((row) => {
-      const key = `${row.year}-${row.month}`;
-      const existing = monthMap.get(key);
-      if (existing) {
-        existing.revenue += row.income;
-        existing.tourists += row.tourismAmount;
-      } else {
-        monthMap.set(key, {
-          revenue: row.income,
-          tourists: row.tourismAmount,
-          year: row.year,
-          month: row.month,
-        });
-      }
-    });
-
-    return Array.from(monthMap.values())
-      .sort((a, b) => {
-        if (a.year !== b.year) return a.year - b.year;
-        return a.month - b.month;
-      })
-      .map((item) => ({
-        month: `${item.year}-${String(item.month).padStart(2, "0")}`,
-        monthLabel:
-          MONTHS.find((m) => m.value === item.month)?.label ||
-          `Month ${item.month}`,
-        monthValue: item.month,
-        year: item.year,
-        revenue: item.revenue,
-        tourists: item.tourists,
-      }));
-  }, [rawData]);
+  // Removed nationwideTrend - no longer needed
 
   // Get selected province data for modal
   const selectedProvinceData = useMemo(() => {
@@ -354,24 +310,37 @@ export default function DashboardPage() {
 
   const handleProvinceClick = (province: string) => {
     setSelectedProvince(province);
-    setModalOpen(true);
   };
 
-  // Pie chart data for top 5 provinces
-  const pieChartData = useMemo(() => {
-    return rankings.topPerformers.map((item) => ({
-      name: item.provinceThai,
-      value: item.value,
-    }));
-  }, [rankings.topPerformers]);
+  // Load monthly data when province is selected - From Heatmap
+  useEffect(() => {
+    if (!selectedProvince || rawData.length === 0) {
+      setMonthlyData([]);
+      return;
+    }
 
-  const COLORS = [
-    "hsl(var(--primary))",
-    "hsl(var(--secondary))",
-    "hsl(var(--accent))",
-    "hsl(142, 71%, 45%)",
-    "hsl(165, 100%, 30%)",
-  ];
+    // Convert map province name to Thai name
+    const thaiName = getThaiProvinceName(selectedProvince);
+
+    // Load data for both Thai and Foreign
+    const thaiData = getMonthlyDataForProvince(rawData, thaiName, {
+      year: year,
+      tourismType: "Thai",
+    });
+    const foreignData = getMonthlyDataForProvince(rawData, thaiName, {
+      year: year,
+      tourismType: "Foreign",
+    });
+    const monthly: MonthlyDataPoint[] = [
+      ...thaiData.map((d) => ({ ...d, tourism_type: "Thai" as const })),
+      ...foreignData.map((d) => ({ ...d, tourism_type: "Foreign" as const })),
+    ];
+
+    setMonthlyData(monthly);
+  }, [selectedProvince, rawData, year]);
+
+  // Pie chart data for top 5 provinces
+  // Removed pieChartData and COLORS - no longer needed
 
   return (
     <>
@@ -379,7 +348,11 @@ export default function DashboardPage() {
         <div className="flex h-16 items-center gap-4 px-4">
           <SidebarTrigger />
           <div className="flex items-center gap-3 flex-1">
-            <TIDLogo size="sm" showText={false} />
+            <div
+              style={{ transform: "scale(0.4)", transformOrigin: "left" }}
+            >
+              <TIDLogo showText={false} />
+            </div>
             <h1 className="text-xl font-bold text-foreground">
               Tourism Insight AI — Dashboard
             </h1>
@@ -508,13 +481,16 @@ export default function DashboardPage() {
                 </div>
               </Card>
             ) : (
-              <ProvinceHeatmap
-                data={heatmapData}
-                metric={metric}
-                mode={mode}
-                selectedProvince={selectedProvince}
-                onProvinceClick={handleProvinceClick}
-              />
+              <>
+                <ProvinceHeatmap
+                  data={heatmapData}
+                  metric={metric}
+                  mode={mode}
+                  selectedProvince={selectedProvince}
+                  onProvinceClick={handleProvinceClick}
+                />
+                
+              </>
             )}
           </div>
 
@@ -547,7 +523,7 @@ export default function DashboardPage() {
                           </div>
                           <div>
                             <p className="font-semibold text-foreground">
-                              {item.provinceThai}
+                              {getEnglishProvinceName(item.provinceThai)}
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {metric === "income"
@@ -596,7 +572,7 @@ export default function DashboardPage() {
                             </div>
                             <div>
                               <p className="font-semibold text-foreground">
-                                {item.provinceThai}
+                                {getEnglishProvinceName(item.provinceThai)}
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 {metric === "income"
@@ -635,48 +611,145 @@ export default function DashboardPage() {
               </Tabs>
             </Card>
 
-            {/* Pie Chart */}
-            {pieChartData.length > 0 && (
-              <Card className="p-6 bg-card border-border shadow-lg">
-                <h3 className="text-lg font-semibold mb-4 text-foreground">
-                  Top 5 Distribution
-                </h3>
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={pieChartData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) =>
-                        `${name}: ${(percent * 100).toFixed(0)}%`
-                      }
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {pieChartData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value: number) =>
-                        metric === "income"
-                          ? `${(value * 1_000_000).toLocaleString("en-US", {
+            {/* Province Details - From Modal */}
+            <Card className="p-6 bg-card border-border shadow-lg">
+              <h3 className="text-lg font-semibold mb-4 text-foreground">
+                Province Details
+              </h3>
+              {selectedProvinceData ? (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Province:</p>
+                    <p className="text-lg font-bold text-foreground">
+                      {getEnglishProvinceName(
+                        selectedProvinceData.provinceThai ||
+                          getThaiProvinceName(selectedProvince) ||
+                          selectedProvince
+                      )}
+                    </p>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-lg border border-primary/10">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground">Revenue</p>
+                        <p className="text-lg font-bold text-primary">
+                          {(() => {
+                            const income =
+                              selectedProvinceData.actualIncome ??
+                              selectedProvinceData.income ??
+                              selectedProvinceData.value;
+                            // If value is in million Baht, convert to actual Baht
+                            return (income * 1_000_000).toLocaleString(
+                              "en-US",
+                              {
+                                maximumFractionDigits: 0,
+                              }
+                            );
+                          })()}{" "}
+                          Baht
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 p-3 bg-secondary/5 rounded-lg border border-secondary/10">
+                      <Users className="h-5 w-5 text-secondary" />
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground">
+                          Visitors
+                        </p>
+                        <p className="text-lg font-bold text-secondary">
+                          {(() => {
+                            const tourists =
+                              selectedProvinceData.actualTourists ??
+                              selectedProvinceData.tourismAmount ??
+                              selectedProvinceData.value;
+                            // If value is already in actual number, use as is
+                            // If value might be in millions, check and convert
+                            return tourists.toLocaleString("en-US", {
                               maximumFractionDigits: 0,
-                            })} Baht`
-                          : `${value.toLocaleString("en-US", {
-                              maximumFractionDigits: 0,
-                            })} people`
-                      }
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </Card>
-            )}
+                            });
+                          })()}{" "}
+                          people
+                        </p>
+                      </div>
+                    </div>
+                    {mode === "growth" &&
+                      selectedProvinceData.yoyGrowth !== undefined && (
+                        <div className="p-3 bg-accent/5 rounded-lg border border-accent/10">
+                          <p className="text-xs text-muted-foreground mb-1">
+                            {growthType === "yoy"
+                              ? "Year-over-Year"
+                              : "Month-over-Month"}{" "}
+                            Growth
+                          </p>
+                          <p
+                            className={`text-lg font-bold ${
+                              selectedProvinceData.yoyGrowth >= 0
+                                ? "text-green-600 dark:text-green-400"
+                                : "text-red-600 dark:text-red-400"
+                            }`}
+                          >
+                            {selectedProvinceData.yoyGrowth >= 0 ? "+" : ""}
+                            {selectedProvinceData.yoyGrowth.toFixed(2)}%
+                          </p>
+                        </div>
+                      )}
+                  </div>
+                  {selectedProvinceData.festivals &&
+                    selectedProvinceData.festivals.length > 0 && (
+                      <div className="pt-4 border-t border-border">
+                        <p className="text-sm font-semibold text-foreground mb-2">
+                          Festivals
+                          {month
+                            ? ` in ${
+                                MONTHS.find((m) => m.value === month)?.label ||
+                                "this month"
+                              }`
+                            : ""}
+                          :
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedProvinceData.festivals.map((festival) => (
+                            <Badge key={festival} variant="outline">
+                              {formatFestivalName(festival)}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  <div className="space-y-2 text-sm pt-2 border-t border-border">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Data Period:
+                      </span>
+                      <span className="font-medium text-foreground">
+                        {year}
+                        {month
+                          ? ` - ${MONTHS.find((m) => m.value === month)?.label}`
+                          : ""}
+                      </span>
+                    </div>
+                  </div>
+                  {mode === "growth" &&
+                    month !== undefined &&
+                    selectedProvince && (
+                      <div className="pt-4">
+                        <Button
+                          onClick={() => setProvinceDetailModalOpen(true)}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          ดูเพิ่มเติม
+                        </Button>
+                      </div>
+                    )}
+                </div>
+              ) : (
+                <div className="text-center text-muted-foreground py-8">
+                  <p>Click a province on the map to see details</p>
+                </div>
+              )}
+            </Card>
           </div>
         </div>
 
@@ -715,96 +788,29 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* Bottom: Overview Trend Chart */}
-        <Card className="p-6 bg-card border-border shadow-lg">
-          <h3 className="text-lg font-semibold mb-4 text-foreground">
-            Nationwide Overview Trend
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={nationwideTrend}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="hsl(var(--border))"
-              />
-              <XAxis
-                dataKey="monthLabel"
-                stroke="hsl(var(--muted-foreground))"
-                style={{ fontSize: "12px" }}
-              />
-              <YAxis
-                stroke="hsl(var(--muted-foreground))"
-                style={{ fontSize: "12px" }}
-                label={{
-                  value:
-                    metric === "income"
-                      ? "Revenue (Baht)"
-                      : "Visitors (people)",
-                  angle: -90,
-                  position: "insideLeft",
-                }}
-                tickFormatter={(v) =>
-                  metric === "income"
-                    ? (v * 1_000_000).toLocaleString("en-US", {
-                        maximumFractionDigits: 0,
-                      })
-                    : v.toLocaleString("en-US", {
-                        maximumFractionDigits: 0,
-                      })
-                }
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-                formatter={(value: number) =>
-                  metric === "income"
-                    ? `${(value * 1_000_000).toLocaleString("en-US", {
-                        maximumFractionDigits: 0,
-                      })} Baht`
-                    : `${value.toLocaleString("en-US", {
-                        maximumFractionDigits: 0,
-                      })} people`
-                }
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey={metric === "income" ? "revenue" : "tourists"}
-                stroke="hsl(var(--primary))"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                name={metric === "income" ? "Revenue" : "Visitors"}
-              />
-              {month && (
-                <ReferenceLine
-                  x={
-                    nationwideTrend.find(
-                      (d) => d.year === year && d.monthValue === month
-                    )?.monthLabel
-                  }
-                  stroke="hsl(var(--accent))"
-                  strokeWidth={2}
-                  strokeDasharray="5 5"
-                  label={{
-                    value: "Selected Month",
-                    position: "top",
-                    fill: "hsl(var(--accent))",
-                    fontSize: 12,
-                  }}
-                />
-              )}
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
+        {/* Monthly Trend Chart - From Heatmap */}
+        {selectedProvince && monthlyData.length > 0 && (
+          <div className="mt-6">
+            <MonthlyTrendChart
+              data={monthlyData}
+              provinceName={
+                getThaiProvinceName(selectedProvince) || selectedProvince
+              }
+              defaultYear={year}
+              showCompareYear={false}
+              rawData={rawData}
+            />
+          </div>
+        )}
 
         {/* Ranking Detail Modal */}
         <Dialog open={rankingModalOpen} onOpenChange={setRankingModalOpen}>
           <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {selectedRankingItem?.provinceThai || "Province Details"}
+                {selectedRankingItem?.provinceThai
+                  ? getEnglishProvinceName(selectedRankingItem.provinceThai)
+                  : "Province Details"}
               </DialogTitle>
             </DialogHeader>
             {selectedRankingItem && year && month && (
@@ -1616,100 +1622,735 @@ export default function DashboardPage() {
         </Dialog>
 
         {/* Province Detail Modal */}
-        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-          <DialogContent className="max-w-md">
+        <Dialog
+          open={provinceDetailModalOpen}
+          onOpenChange={setProvinceDetailModalOpen}
+        >
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {selectedProvinceData?.provinceThai ||
-                  getThaiProvinceName(selectedProvince) ||
-                  selectedProvince}
+                getThaiProvinceName(selectedProvince) ||
+                selectedProvince
+                  ? getEnglishProvinceName(
+                      selectedProvinceData?.provinceThai ||
+                        getThaiProvinceName(selectedProvince) ||
+                        selectedProvince
+                    )
+                  : "Province Details"}
               </DialogTitle>
             </DialogHeader>
-            {selectedProvinceData && (
+            {selectedProvince && year && month && (
               <div className="space-y-4">
+                {/* Current Period Data */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-lg border border-primary/10">
-                    <TrendingUp className="h-5 w-5 text-primary" />
-                    <div className="flex-1">
-                      <p className="text-xs text-muted-foreground">Revenue</p>
-                      <p className="text-lg font-bold text-primary">
-                        {(() => {
-                          const income =
-                            selectedProvinceData.actualIncome ??
-                            selectedProvinceData.income ??
-                            selectedProvinceData.value;
-                          // If value is in million Baht, convert to actual Baht
-                          return (income * 1_000_000).toLocaleString("en-US", {
-                            maximumFractionDigits: 0,
-                          });
-                        })()}{" "}
-                        Baht
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 p-3 bg-secondary/5 rounded-lg border border-secondary/10">
-                    <Users className="h-5 w-5 text-secondary" />
-                    <div className="flex-1">
-                      <p className="text-xs text-muted-foreground">Visitors</p>
-                      <p className="text-lg font-bold text-secondary">
-                        {(() => {
-                          const tourists =
-                            selectedProvinceData.actualTourists ??
-                            selectedProvinceData.tourismAmount ??
-                            selectedProvinceData.value;
-                          // If value is already in actual number, use as is
-                          // If value might be in millions, check and convert
-                          return tourists.toLocaleString("en-US", {
-                            maximumFractionDigits: 0,
-                          });
-                        })()}{" "}
-                        people
-                      </p>
-                    </div>
-                  </div>
-                  {mode === "growth" &&
-                    selectedProvinceData.yoyGrowth !== undefined && (
-                      <div className="p-3 bg-accent/5 rounded-lg border border-accent/10">
-                        <p className="text-xs text-muted-foreground mb-1">
-                          {growthType === "yoy"
-                            ? "Year-over-Year"
-                            : "Month-over-Month"}{" "}
-                          Growth
-                        </p>
-                        <p
-                          className={`text-lg font-bold ${
-                            selectedProvinceData.yoyGrowth >= 0
-                              ? "text-green-600 dark:text-green-400"
-                              : "text-red-600 dark:text-red-400"
-                          }`}
-                        >
-                          {selectedProvinceData.yoyGrowth >= 0 ? "+" : ""}
-                          {selectedProvinceData.yoyGrowth.toFixed(2)}%
-                        </p>
+                  <h4 className="font-semibold text-foreground">
+                    {MONTHS.find((m) => m.value === month)?.label} {year}{" "}
+                    (Current)
+                  </h4>
+                  {(() => {
+                    const currentData = rawData.filter(
+                      (r) =>
+                        (r.province === selectedProvince ||
+                          getThaiProvinceName(r.province) ===
+                            getThaiProvinceName(selectedProvince)) &&
+                        r.year === year &&
+                        r.month === month
+                    );
+
+                    const thaiData = currentData.filter(
+                      (r) => r.tourismType === "Thai"
+                    );
+                    const foreignData = currentData.filter(
+                      (r) => r.tourismType === "Foreign"
+                    );
+
+                    const thaiIncome = thaiData.reduce(
+                      (sum, r) => sum + r.income,
+                      0
+                    );
+                    const thaiTourists = thaiData.reduce(
+                      (sum, r) => sum + r.tourismAmount,
+                      0
+                    );
+                    const foreignIncome = foreignData.reduce(
+                      (sum, r) => sum + r.income,
+                      0
+                    );
+                    const foreignTourists = foreignData.reduce(
+                      (sum, r) => sum + r.tourismAmount,
+                      0
+                    );
+
+                    return (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-3 bg-primary/5 rounded-lg border border-primary/10">
+                          <p className="text-xs text-muted-foreground mb-1">
+                            Thai Tourists
+                          </p>
+                          <p className="text-lg font-bold text-primary">
+                            {(thaiIncome * 1_000_000).toLocaleString("en-US", {
+                              maximumFractionDigits: 0,
+                            })}{" "}
+                            Baht
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {thaiTourists.toLocaleString("en-US", {
+                              maximumFractionDigits: 0,
+                            })}{" "}
+                            people
+                          </p>
+                        </div>
+                        <div className="p-3 bg-secondary/5 rounded-lg border border-secondary/10">
+                          <p className="text-xs text-muted-foreground mb-1">
+                            Foreign Tourists
+                          </p>
+                          <p className="text-lg font-bold text-secondary">
+                            {(foreignIncome * 1_000_000).toLocaleString(
+                              "en-US",
+                              {
+                                maximumFractionDigits: 0,
+                              }
+                            )}{" "}
+                            Baht
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {foreignTourists.toLocaleString("en-US", {
+                              maximumFractionDigits: 0,
+                            })}{" "}
+                            people
+                          </p>
+                        </div>
                       </div>
-                    )}
+                    );
+                  })()}
                 </div>
-                {selectedProvinceData.festivals.length > 0 && (
-                  <div className="pt-4 border-t border-border">
-                    <p className="text-sm font-semibold text-foreground mb-2">
-                      Festivals
-                      {month
-                        ? ` in ${
-                            MONTHS.find((m) => m.value === month)?.label ||
-                            "this month"
-                          }`
-                        : ""}
-                      :
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedProvinceData.festivals.map((festival) => (
-                        <Badge key={festival} variant="outline">
-                          {formatFestivalName(festival)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
+
+                {/* Comparison Period Data */}
+                {mode === "growth" &&
+                  (() => {
+                    const prevMonth =
+                      growthType === "mom"
+                        ? month === 1
+                          ? 12
+                          : month - 1
+                        : month;
+                    const prevYear =
+                      growthType === "mom"
+                        ? month === 1
+                          ? year - 1
+                          : year
+                        : year - 1;
+
+                    const comparisonData = rawData.filter(
+                      (r) =>
+                        (r.province === selectedProvince ||
+                          getThaiProvinceName(r.province) ===
+                            getThaiProvinceName(selectedProvince)) &&
+                        r.year === prevYear &&
+                        r.month === prevMonth
+                    );
+
+                    if (comparisonData.length === 0) return null;
+
+                    const thaiData = comparisonData.filter(
+                      (r) => r.tourismType === "Thai"
+                    );
+                    const foreignData = comparisonData.filter(
+                      (r) => r.tourismType === "Foreign"
+                    );
+
+                    const thaiIncome = thaiData.reduce(
+                      (sum, r) => sum + r.income,
+                      0
+                    );
+                    const thaiTourists = thaiData.reduce(
+                      (sum, r) => sum + r.tourismAmount,
+                      0
+                    );
+                    const foreignIncome = foreignData.reduce(
+                      (sum, r) => sum + r.income,
+                      0
+                    );
+                    const foreignTourists = foreignData.reduce(
+                      (sum, r) => sum + r.tourismAmount,
+                      0
+                    );
+
+                    return (
+                      <div className="space-y-3 pt-4 border-t border-border">
+                        <h4 className="font-semibold text-foreground">
+                          {growthType === "yoy"
+                            ? `${
+                                MONTHS.find((m) => m.value === month)?.label
+                              } ${year - 1} (Previous Year)`
+                            : `${
+                                MONTHS.find((m) => m.value === prevMonth)?.label
+                              } ${prevYear} (Previous Month)`}
+                        </h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="p-3 bg-muted/50 rounded-lg border border-border">
+                            <p className="text-xs text-muted-foreground mb-1">
+                              Thai Tourists
+                            </p>
+                            <p className="text-lg font-bold text-foreground">
+                              {(thaiIncome * 1_000_000).toLocaleString(
+                                "en-US",
+                                {
+                                  maximumFractionDigits: 0,
+                                }
+                              )}{" "}
+                              Baht
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {thaiTourists.toLocaleString("en-US", {
+                                maximumFractionDigits: 0,
+                              })}{" "}
+                              people
+                            </p>
+                          </div>
+                          <div className="p-3 bg-muted/50 rounded-lg border border-border">
+                            <p className="text-xs text-muted-foreground mb-1">
+                              Foreign Tourists
+                            </p>
+                            <p className="text-lg font-bold text-foreground">
+                              {(foreignIncome * 1_000_000).toLocaleString(
+                                "en-US",
+                                {
+                                  maximumFractionDigits: 0,
+                                }
+                              )}{" "}
+                              Baht
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {foreignTourists.toLocaleString("en-US", {
+                                maximumFractionDigits: 0,
+                              })}{" "}
+                              people
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                {/* Growth Rate by Tourism Type Table */}
+                {mode === "growth" &&
+                  (() => {
+                    const prevMonth =
+                      growthType === "mom"
+                        ? month === 1
+                          ? 12
+                          : month - 1
+                        : month;
+                    const prevYear =
+                      growthType === "mom"
+                        ? month === 1
+                          ? year - 1
+                          : year
+                        : year - 1;
+
+                    const currentData = rawData.filter(
+                      (r) =>
+                        (r.province === selectedProvince ||
+                          getThaiProvinceName(r.province) ===
+                            getThaiProvinceName(selectedProvince)) &&
+                        r.year === year &&
+                        r.month === month
+                    );
+
+                    const comparisonData = rawData.filter(
+                      (r) =>
+                        (r.province === selectedProvince ||
+                          getThaiProvinceName(r.province) ===
+                            getThaiProvinceName(selectedProvince)) &&
+                        r.year === prevYear &&
+                        r.month === prevMonth
+                    );
+
+                    if (currentData.length === 0 || comparisonData.length === 0)
+                      return null;
+
+                    // Calculate totals for current period
+                    const currentTotalIncome =
+                      currentData.reduce((sum, r) => sum + r.income, 0) *
+                      1_000_000;
+                    const currentTotalTourists = currentData.reduce(
+                      (sum, r) => sum + r.tourismAmount,
+                      0
+                    );
+
+                    // Calculate totals for previous period
+                    const previousTotalIncome =
+                      comparisonData.reduce((sum, r) => sum + r.income, 0) *
+                      1_000_000;
+                    const previousTotalTourists = comparisonData.reduce(
+                      (sum, r) => sum + r.tourismAmount,
+                      0
+                    );
+
+                    // Calculate growth rates
+                    const incomeGrowthRate =
+                      previousTotalIncome > 0
+                        ? ((currentTotalIncome - previousTotalIncome) /
+                            previousTotalIncome) *
+                          100
+                        : 0;
+                    const touristsGrowthRate =
+                      previousTotalTourists > 0
+                        ? ((currentTotalTourists - previousTotalTourists) /
+                            previousTotalTourists) *
+                          100
+                        : 0;
+
+                    const currentMonthLabel =
+                      MONTHS.find((m) => m.value === month)?.label || "";
+                    const prevMonthLabel =
+                      MONTHS.find((m) => m.value === prevMonth)?.label || "";
+
+                    // Calculate breakdown by tourism type
+                    const currentThaiData = currentData.filter(
+                      (r) => r.tourismType === "Thai"
+                    );
+                    const currentForeignData = currentData.filter(
+                      (r) => r.tourismType === "Foreign"
+                    );
+                    const previousThaiData = comparisonData.filter(
+                      (r) => r.tourismType === "Thai"
+                    );
+                    const previousForeignData = comparisonData.filter(
+                      (r) => r.tourismType === "Foreign"
+                    );
+
+                    const currentThaiIncome =
+                      currentThaiData.reduce((sum, r) => sum + r.income, 0) *
+                      1_000_000;
+                    const currentThaiTourists = currentThaiData.reduce(
+                      (sum, r) => sum + r.tourismAmount,
+                      0
+                    );
+                    const currentForeignIncome =
+                      currentForeignData.reduce((sum, r) => sum + r.income, 0) *
+                      1_000_000;
+                    const currentForeignTourists = currentForeignData.reduce(
+                      (sum, r) => sum + r.tourismAmount,
+                      0
+                    );
+
+                    const previousThaiIncome =
+                      previousThaiData.reduce((sum, r) => sum + r.income, 0) *
+                      1_000_000;
+                    const previousThaiTourists = previousThaiData.reduce(
+                      (sum, r) => sum + r.tourismAmount,
+                      0
+                    );
+                    const previousForeignIncome =
+                      previousForeignData.reduce(
+                        (sum, r) => sum + r.income,
+                        0
+                      ) * 1_000_000;
+                    const previousForeignTourists = previousForeignData.reduce(
+                      (sum, r) => sum + r.tourismAmount,
+                      0
+                    );
+
+                    // Calculate growth rates for each type
+                    const thaiIncomeGrowth =
+                      previousThaiIncome > 0
+                        ? ((currentThaiIncome - previousThaiIncome) /
+                            previousThaiIncome) *
+                          100
+                        : 0;
+                    const thaiTouristsGrowth =
+                      previousThaiTourists > 0
+                        ? ((currentThaiTourists - previousThaiTourists) /
+                            previousThaiTourists) *
+                          100
+                        : 0;
+                    const foreignIncomeGrowth =
+                      previousForeignIncome > 0
+                        ? ((currentForeignIncome - previousForeignIncome) /
+                            previousForeignIncome) *
+                          100
+                        : 0;
+                    const foreignTouristsGrowth =
+                      previousForeignTourists > 0
+                        ? ((currentForeignTourists - previousForeignTourists) /
+                            previousForeignTourists) *
+                          100
+                        : 0;
+
+                    return (
+                      <div className="pt-4 border-t border-border">
+                        <h4 className="font-semibold text-foreground mb-4">
+                          Growth Rate by Tourism Type
+                        </h4>
+                        <div className="overflow-x-auto rounded-lg border border-border bg-card">
+                          <table className="w-full border-collapse">
+                            <thead>
+                              <tr className="border-b-2 border-border bg-muted/50">
+                                <th className="text-left px-6 py-4 font-semibold text-foreground min-w-[200px]">
+                                  Metric
+                                </th>
+                                <th className="text-right px-6 py-4 font-semibold text-foreground min-w-[180px] whitespace-nowrap">
+                                  {prevMonthLabel} {prevYear}
+                                </th>
+                                <th className="text-right px-6 py-4 font-semibold text-foreground min-w-[180px] whitespace-nowrap">
+                                  {currentMonthLabel} {year}
+                                </th>
+                                <th className="text-right px-6 py-4 font-semibold text-foreground min-w-[180px]">
+                                  Difference
+                                </th>
+                                <th className="text-right px-6 py-4 font-semibold text-foreground min-w-[140px]">
+                                  Growth Rate (%)
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr className="border-b border-border hover:bg-muted/20 transition-colors">
+                                <td className="px-6 py-4 font-semibold text-foreground">
+                                  Total Revenue
+                                </td>
+                                <td className="px-6 py-4 text-right text-foreground font-mono text-sm">
+                                  {previousTotalIncome.toLocaleString("en-US", {
+                                    maximumFractionDigits: 0,
+                                  })}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    Baht
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-right text-foreground font-mono text-sm">
+                                  {currentTotalIncome.toLocaleString("en-US", {
+                                    maximumFractionDigits: 0,
+                                  })}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    Baht
+                                  </span>
+                                </td>
+                                <td
+                                  className={`px-6 py-4 text-right font-mono text-sm font-semibold ${
+                                    currentTotalIncome - previousTotalIncome >=
+                                    0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  }`}
+                                >
+                                  {currentTotalIncome - previousTotalIncome >= 0
+                                    ? "+"
+                                    : ""}
+                                  {(
+                                    currentTotalIncome - previousTotalIncome
+                                  ).toLocaleString("en-US", {
+                                    maximumFractionDigits: 0,
+                                  })}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    Baht
+                                  </span>
+                                </td>
+                                <td
+                                  className={`px-6 py-4 text-right font-bold text-base ${
+                                    incomeGrowthRate >= 0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  }`}
+                                >
+                                  {incomeGrowthRate >= 0 ? "+" : ""}
+                                  {incomeGrowthRate.toFixed(2)}%
+                                </td>
+                              </tr>
+                              <tr className="border-b border-border hover:bg-muted/20 transition-colors">
+                                <td className="px-6 py-3 font-medium text-foreground pl-10 text-sm">
+                                  • Thai Tourists Revenue
+                                </td>
+                                <td className="px-6 py-3 text-right text-foreground font-mono text-sm">
+                                  {previousThaiIncome.toLocaleString("en-US", {
+                                    maximumFractionDigits: 0,
+                                  })}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    Baht
+                                  </span>
+                                </td>
+                                <td className="px-6 py-3 text-right text-foreground font-mono text-sm">
+                                  {currentThaiIncome.toLocaleString("en-US", {
+                                    maximumFractionDigits: 0,
+                                  })}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    Baht
+                                  </span>
+                                </td>
+                                <td
+                                  className={`px-6 py-3 text-right font-mono text-sm font-semibold ${
+                                    currentThaiIncome - previousThaiIncome >= 0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  }`}
+                                >
+                                  {currentThaiIncome - previousThaiIncome >= 0
+                                    ? "+"
+                                    : ""}
+                                  {(
+                                    currentThaiIncome - previousThaiIncome
+                                  ).toLocaleString("en-US", {
+                                    maximumFractionDigits: 0,
+                                  })}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    Baht
+                                  </span>
+                                </td>
+                                <td
+                                  className={`px-6 py-3 text-right font-semibold ${
+                                    thaiIncomeGrowth >= 0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  }`}
+                                >
+                                  {thaiIncomeGrowth >= 0 ? "+" : ""}
+                                  {thaiIncomeGrowth.toFixed(2)}%
+                                </td>
+                              </tr>
+                              <tr className="border-b border-border hover:bg-muted/20 transition-colors">
+                                <td className="px-6 py-3 font-medium text-foreground pl-10 text-sm">
+                                  • Foreign Tourists Revenue
+                                </td>
+                                <td className="px-6 py-3 text-right text-foreground font-mono text-sm">
+                                  {previousForeignIncome.toLocaleString(
+                                    "en-US",
+                                    {
+                                      maximumFractionDigits: 0,
+                                    }
+                                  )}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    Baht
+                                  </span>
+                                </td>
+                                <td className="px-6 py-3 text-right text-foreground font-mono text-sm">
+                                  {currentForeignIncome.toLocaleString(
+                                    "en-US",
+                                    {
+                                      maximumFractionDigits: 0,
+                                    }
+                                  )}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    Baht
+                                  </span>
+                                </td>
+                                <td
+                                  className={`px-6 py-3 text-right font-mono text-sm font-semibold ${
+                                    currentForeignIncome -
+                                      previousForeignIncome >=
+                                    0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  }`}
+                                >
+                                  {currentForeignIncome -
+                                    previousForeignIncome >=
+                                  0
+                                    ? "+"
+                                    : ""}
+                                  {(
+                                    currentForeignIncome - previousForeignIncome
+                                  ).toLocaleString("en-US", {
+                                    maximumFractionDigits: 0,
+                                  })}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    Baht
+                                  </span>
+                                </td>
+                                <td
+                                  className={`px-6 py-3 text-right font-semibold ${
+                                    foreignIncomeGrowth >= 0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  }`}
+                                >
+                                  {foreignIncomeGrowth >= 0 ? "+" : ""}
+                                  {foreignIncomeGrowth.toFixed(2)}%
+                                </td>
+                              </tr>
+                              <tr className="border-b-2 border-border">
+                                <td className="px-6 py-4 font-semibold text-foreground">
+                                  Total Tourists
+                                </td>
+                                <td className="px-6 py-4 text-right text-foreground font-mono text-sm">
+                                  {previousTotalTourists.toLocaleString(
+                                    "en-US",
+                                    {
+                                      maximumFractionDigits: 0,
+                                    }
+                                  )}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    people
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-right text-foreground font-mono text-sm">
+                                  {currentTotalTourists.toLocaleString(
+                                    "en-US",
+                                    {
+                                      maximumFractionDigits: 0,
+                                    }
+                                  )}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    people
+                                  </span>
+                                </td>
+                                <td
+                                  className={`px-6 py-4 text-right font-mono text-sm font-semibold ${
+                                    currentTotalTourists -
+                                      previousTotalTourists >=
+                                    0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  }`}
+                                >
+                                  {currentTotalTourists -
+                                    previousTotalTourists >=
+                                  0
+                                    ? "+"
+                                    : ""}
+                                  {(
+                                    currentTotalTourists - previousTotalTourists
+                                  ).toLocaleString("en-US", {
+                                    maximumFractionDigits: 0,
+                                  })}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    people
+                                  </span>
+                                </td>
+                                <td
+                                  className={`px-6 py-4 text-right font-bold text-base ${
+                                    touristsGrowthRate >= 0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  }`}
+                                >
+                                  {touristsGrowthRate >= 0 ? "+" : ""}
+                                  {touristsGrowthRate.toFixed(2)}%
+                                </td>
+                              </tr>
+                              <tr className="border-b border-border hover:bg-muted/20 transition-colors">
+                                <td className="px-6 py-3 font-medium text-foreground pl-10 text-sm">
+                                  • Thai Tourists
+                                </td>
+                                <td className="px-6 py-3 text-right text-foreground font-mono text-sm">
+                                  {previousThaiTourists.toLocaleString(
+                                    "en-US",
+                                    {
+                                      maximumFractionDigits: 0,
+                                    }
+                                  )}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    people
+                                  </span>
+                                </td>
+                                <td className="px-6 py-3 text-right text-foreground font-mono text-sm">
+                                  {currentThaiTourists.toLocaleString("en-US", {
+                                    maximumFractionDigits: 0,
+                                  })}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    people
+                                  </span>
+                                </td>
+                                <td
+                                  className={`px-6 py-3 text-right font-mono text-sm font-semibold ${
+                                    currentThaiTourists -
+                                      previousThaiTourists >=
+                                    0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  }`}
+                                >
+                                  {currentThaiTourists - previousThaiTourists >=
+                                  0
+                                    ? "+"
+                                    : ""}
+                                  {(
+                                    currentThaiTourists - previousThaiTourists
+                                  ).toLocaleString("en-US", {
+                                    maximumFractionDigits: 0,
+                                  })}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    people
+                                  </span>
+                                </td>
+                                <td
+                                  className={`px-6 py-3 text-right font-semibold ${
+                                    thaiTouristsGrowth >= 0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  }`}
+                                >
+                                  {thaiTouristsGrowth >= 0 ? "+" : ""}
+                                  {thaiTouristsGrowth.toFixed(2)}%
+                                </td>
+                              </tr>
+                              <tr className="border-b border-border hover:bg-muted/20 transition-colors">
+                                <td className="px-6 py-3 font-medium text-foreground pl-10 text-sm">
+                                  • Foreign Tourists
+                                </td>
+                                <td className="px-6 py-3 text-right text-foreground font-mono text-sm">
+                                  {previousForeignTourists.toLocaleString(
+                                    "en-US",
+                                    {
+                                      maximumFractionDigits: 0,
+                                    }
+                                  )}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    people
+                                  </span>
+                                </td>
+                                <td className="px-6 py-3 text-right text-foreground font-mono text-sm">
+                                  {currentForeignTourists.toLocaleString(
+                                    "en-US",
+                                    {
+                                      maximumFractionDigits: 0,
+                                    }
+                                  )}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    people
+                                  </span>
+                                </td>
+                                <td
+                                  className={`px-6 py-3 text-right font-mono text-sm font-semibold ${
+                                    currentForeignTourists -
+                                      previousForeignTourists >=
+                                    0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  }`}
+                                >
+                                  {currentForeignTourists -
+                                    previousForeignTourists >=
+                                  0
+                                    ? "+"
+                                    : ""}
+                                  {(
+                                    currentForeignTourists -
+                                    previousForeignTourists
+                                  ).toLocaleString("en-US", {
+                                    maximumFractionDigits: 0,
+                                  })}{" "}
+                                  <span className="text-muted-foreground text-xs">
+                                    people
+                                  </span>
+                                </td>
+                                <td
+                                  className={`px-6 py-3 text-right font-semibold ${
+                                    foreignTouristsGrowth >= 0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  }`}
+                                >
+                                  {foreignTouristsGrowth >= 0 ? "+" : ""}
+                                  {foreignTouristsGrowth.toFixed(2)}%
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  })()}
               </div>
             )}
           </DialogContent>
