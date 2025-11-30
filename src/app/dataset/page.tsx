@@ -28,6 +28,7 @@ import { THAI_PROVINCES, MONTHS } from "@/data/provinces";
 import { isHighSeason } from "@/utils/highSeasonLogic";
 import { formatFestivalName } from "@/utils/festivalDetector";
 import { Badge } from "@/components/ui/badge";
+import { getEnglishProvinceName } from "@/utils/provinceMapping";
 
 export default function DatasetPage() {
   const [rawData, setRawData] = useState<TourismDataRow[]>([]);
@@ -92,11 +93,16 @@ export default function DatasetPage() {
       });
     }
 
-    // Filter by search query (province name)
+    // Filter by search query (province name - support both Thai and English)
     if (searchQuery) {
-      filtered = filtered.filter((d) =>
-        d.province.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      const searchLower = searchQuery.toLowerCase();
+      filtered = filtered.filter((d) => {
+        const englishName = getEnglishProvinceName(d.province) || "";
+        return (
+          d.province.toLowerCase().includes(searchLower) ||
+          englishName.toLowerCase().includes(searchLower)
+        );
+      });
     }
 
     return filtered;
@@ -211,7 +217,7 @@ export default function DatasetPage() {
                     <SelectItem value="all">All Provinces</SelectItem>
                     {THAI_PROVINCES.map((province) => (
                       <SelectItem key={province} value={province}>
-                        {province}
+                        {getEnglishProvinceName(province) || province}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -373,7 +379,7 @@ export default function DatasetPage() {
                           key={`${row.province}-${row.year}-${row.month}-${row.tourismType}-${index}`}
                         >
                           <TableCell className="font-medium">
-                            {row.province}
+                            {getEnglishProvinceName(row.province) || row.province}
                           </TableCell>
                           <TableCell>{row.year}</TableCell>
                           <TableCell>

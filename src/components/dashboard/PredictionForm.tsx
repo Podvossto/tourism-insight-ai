@@ -51,6 +51,7 @@ import {
   getProvinceSpecificFestivals,
 } from "@/utils/festivalLogic";
 import { cn } from "@/lib/utils";
+import { getEnglishProvinceName } from "@/utils/provinceMapping";
 
 interface PredictionFormProps {
   onPredict: (input: PredictionInput) => void;
@@ -388,7 +389,9 @@ export function PredictionForm({
                 aria-expanded={provinceSearchOpen}
                 className="w-full justify-between bg-background"
               >
-                {formData.province || "Select province..."}
+                {formData.province
+                  ? getEnglishProvinceName(formData.province) || formData.province
+                  : "Select province..."}
                 <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -412,11 +415,14 @@ export function PredictionForm({
                     >
                       All provinces
                     </CommandItem>
-                    {THAI_PROVINCES.filter((province) =>
-                      province
-                        .toLowerCase()
-                        .includes(provinceSearchQuery.toLowerCase())
-                    ).map((province) => (
+                    {THAI_PROVINCES.filter((province) => {
+                      const englishName = getEnglishProvinceName(province) || "";
+                      const searchLower = provinceSearchQuery.toLowerCase();
+                      return (
+                        province.toLowerCase().includes(searchLower) ||
+                        englishName.toLowerCase().includes(searchLower)
+                      );
+                    }).map((province) => (
                       <CommandItem
                         key={province}
                         value={province}
@@ -429,7 +435,7 @@ export function PredictionForm({
                           }
                         }}
                       >
-                        {province}
+                        {getEnglishProvinceName(province) || province}
                       </CommandItem>
                     ))}
                   </CommandGroup>

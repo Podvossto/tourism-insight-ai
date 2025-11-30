@@ -34,6 +34,7 @@ import {
   COMMON_FESTIVALS,
   getProvinceSpecificFestivals,
 } from "@/utils/festivalLogic";
+import { getEnglishProvinceName } from "@/utils/provinceMapping";
 
 export default function ConditionsPage() {
   const [rawData, setRawData] = useState<TourismDataRow[]>([]);
@@ -107,11 +108,16 @@ export default function ConditionsPage() {
   const filteredTableData = useMemo(() => {
     let filtered = tableData;
 
-    // Filter by search query
+    // Filter by search query (province name - support both Thai and English)
     if (searchQuery) {
-      filtered = filtered.filter((d) =>
-        d.province.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      const searchLower = searchQuery.toLowerCase();
+      filtered = filtered.filter((d) => {
+        const englishName = getEnglishProvinceName(d.province) || "";
+        return (
+          d.province.toLowerCase().includes(searchLower) ||
+          englishName.toLowerCase().includes(searchLower)
+        );
+      });
     }
 
     // Filter by province
@@ -202,8 +208,7 @@ export default function ConditionsPage() {
                     Northern & Northeast
                   </p>
                   <p className="text-xs text-muted-foreground mb-2">
-                    Provinces: เชียงใหม่, เชียงราย, น่าน, แม่ฮ่องสอน, เลย,
-                    นครราชสีมา
+                    Provinces: {["เชียงใหม่", "เชียงราย", "น่าน", "แม่ฮ่องสอน", "เลย", "นครราชสีมา"].map(p => getEnglishProvinceName(p) || p).join(", ")}
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {[11, 12, 1, 2].map((m) => (
@@ -216,7 +221,7 @@ export default function ConditionsPage() {
                 <div className="p-3 bg-accent/30 rounded-lg">
                   <p className="text-sm font-semibold mb-2">Andaman Sea</p>
                   <p className="text-xs text-muted-foreground mb-2">
-                    Provinces: ภูเก็ต, กระบี่, พังงา, ตรัง, สตูล
+                    Provinces: {["ภูเก็ต", "กระบี่", "พังงา", "ตรัง", "สตูล"].map(p => getEnglishProvinceName(p) || p).join(", ")}
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {[11, 12, 1, 2, 3, 4].map((m) => (
@@ -229,7 +234,7 @@ export default function ConditionsPage() {
                 <div className="p-3 bg-accent/30 rounded-lg">
                   <p className="text-sm font-semibold mb-2">Gulf of Thailand</p>
                   <p className="text-xs text-muted-foreground mb-2">
-                    Provinces: สุราษฎร์ธานี, ชุมพร
+                    Provinces: {["สุราษฎร์ธานี", "ชุมพร"].map(p => getEnglishProvinceName(p) || p).join(", ")}
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {[1, 2, 3, 4, 7, 8].map((m) => (
@@ -242,7 +247,7 @@ export default function ConditionsPage() {
                 <div className="p-3 bg-accent/30 rounded-lg">
                   <p className="text-sm font-semibold mb-2">Eastern</p>
                   <p className="text-xs text-muted-foreground mb-2">
-                    Provinces: ชลบุรี, ระยอง, ตราด
+                    Provinces: {["ชลบุรี", "ระยอง", "ตราด"].map(p => getEnglishProvinceName(p) || p).join(", ")}
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {[3, 4, 5, 11, 12].map((m) => (
@@ -352,7 +357,7 @@ export default function ConditionsPage() {
                     <SelectItem value="all">All Provinces</SelectItem>
                     {THAI_PROVINCES.map((province) => (
                       <SelectItem key={province} value={province}>
-                        {province}
+                        {getEnglishProvinceName(province) || province}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -444,7 +449,7 @@ export default function ConditionsPage() {
                     filteredTableData.map((row, index) => (
                       <TableRow key={`${row.province}-${row.month}-${index}`}>
                         <TableCell className="font-medium">
-                          {row.province}
+                          {getEnglishProvinceName(row.province) || row.province}
                         </TableCell>
                         <TableCell>{row.monthLabel}</TableCell>
                         <TableCell>

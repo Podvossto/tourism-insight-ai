@@ -507,8 +507,10 @@ export default function DashboardPage() {
                         key={item.province}
                         className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border cursor-pointer hover:bg-muted transition-colors"
                         onClick={() => {
-                          setSelectedRankingItem(item);
-                          setRankingModalOpen(true);
+                          // Highlight on map and show details, no modal
+                          const provinceToSelect =
+                            item.province || item.provinceThai;
+                          handleProvinceClick(provinceToSelect);
                         }}
                       >
                         <div className="flex items-center gap-3">
@@ -556,8 +558,10 @@ export default function DashboardPage() {
                           key={item.province}
                           className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border cursor-pointer hover:bg-muted transition-colors"
                           onClick={() => {
-                            setSelectedRankingItem(item);
-                            setRankingModalOpen(true);
+                            // Highlight on map and show details, no modal
+                            const provinceToSelect =
+                              item.province || item.provinceThai;
+                            handleProvinceClick(provinceToSelect);
                           }}
                         >
                           <div className="flex items-center gap-3">
@@ -733,7 +737,7 @@ export default function DashboardPage() {
                           variant="outline"
                           className="w-full"
                         >
-                          ดูเพิ่มเติม
+                          Show more details
                         </Button>
                       </div>
                     )}
@@ -792,6 +796,7 @@ export default function DashboardPage() {
               }
               defaultYear={year}
               showCompareYear={false}
+              showCompareProvince={true}
               rawData={rawData}
             />
           </div>

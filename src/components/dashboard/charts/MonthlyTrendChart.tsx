@@ -24,7 +24,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MONTHS } from "@/data/provinces";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { MONTHS, THAI_PROVINCES } from "@/data/provinces";
 import type { MonthlyDataPoint, TourismDataRow } from "@/types/tourism";
 import {
   getFestivalsForProvinceAndMonth,
@@ -34,7 +49,8 @@ import {
   COMMON_FESTIVALS,
   getProvinceSpecificFestivals,
 } from "@/utils/festivalLogic";
-import { getEnglishProvinceName } from "@/utils/provinceMapping";
+import { getEnglishProvinceName, getThaiProvinceName } from "@/utils/provinceMapping";
+import { getMonthlyDataForProvince } from "@/utils/tourismDataLoader";
 
 interface MonthlyTrendChartProps {
   data: MonthlyDataPoint[];
@@ -42,6 +58,7 @@ interface MonthlyTrendChartProps {
   tourismType?: "Thai" | "Foreign"; // Tourism type for the chart
   defaultYear?: number; // Default year from parent filter
   showCompareYear?: boolean; // Show compare year selector (default: true)
+  showCompareProvince?: boolean; // Show compare province selector (default: true)
   rawData?: TourismDataRow[]; // Raw data for festival detection
   predictionYear?: number; // Year used for prediction - cannot be selected as compare year
 }
@@ -57,6 +74,7 @@ export function MonthlyTrendChart({
   tourismType,
   defaultYear,
   showCompareYear = true,
+  showCompareProvince = true,
   rawData = [],
   predictionYear,
 }: MonthlyTrendChartProps) {
@@ -84,6 +102,9 @@ export function MonthlyTrendChart({
   }, [defaultYear]);
 
   const [compareYear, setCompareYear] = useState<number | undefined>(undefined);
+  const [compareProvince, setCompareProvince] = useState<string | undefined>(undefined);
+  const [compareProvinceOpen, setCompareProvinceOpen] = useState(false);
+  const [compareProvinceSearchQuery, setCompareProvinceSearchQuery] = useState("");
 
   // Check if both Thai and Foreign data exist
   const hasBothTourismTypes = useMemo(() => {
@@ -338,15 +359,93 @@ export function MonthlyTrendChart({
     });
   }, [data, compareYear, selectedTourismType, chartType, showCompareYear]);
 
-  // Merge compare year data into chartData
+  // Calculate compare province data if compareProvince is selected
+  const compareProvinceData = useMemo(() => {
+    if (!compareProvince || !rawData.length || !selectedYear || !showCompareProvince) return null;
+
+    const thaiName = getThaiProvinceName(compareProvince) || compareProvince;
+    
+    // Load data for both Thai and Foreign if "All" is selected, otherwise load for selected type
+    let compareData: MonthlyDataPoint[] = [];
+    if (selectedTourismType === "All") {
+      const thaiData = getMonthlyDataForProvince(rawData, thaiName, {
+        year: selectedYear,
+        tourismType: "Thai",
+      });
+      const foreignData = getMonthlyDataForProvince(rawData, thaiName, {
+        year: selectedYear,
+        tourismType: "Foreign",
+      });
+      compareData = [
+        ...thaiData.map((d) => ({ ...d, tourism_type: "Thai" as const })),
+        ...foreignData.map((d) => ({ ...d, tourism_type: "Foreign" as const })),
+      ];
+    } else {
+      compareData = getMonthlyDataForProvince(rawData, thaiName, {
+        year: selectedYear,
+        tourismType: selectedTourismType,
+      }).map((d) => ({ ...d, tourism_type: selectedTourismType }));
+    }
+
+    // Group by month
+    const monthMap = new Map<
+      number,
+      { revenue: number; tourists: number; count: number }
+    >();
+
+    compareData.forEach((point) => {
+      const existing = monthMap.get(point.month);
+      if (existing) {
+        existing.revenue += point.revenue;
+        existing.tourists += point.tourists;
+        existing.count += 1;
+      } else {
+        monthMap.set(point.month, {
+          revenue: point.revenue,
+          tourists: point.tourists,
+          count: 1,
+        });
+      }
+    });
+
+    return monthLabels.map(({ value, label }) => {
+      const monthData = monthMap.get(value);
+      return {
+        month: label,
+        compareProvinceRevenue: monthData
+          ? monthData.revenue / monthData.count
+          : null,
+        compareProvinceTourists: monthData
+          ? monthData.tourists / monthData.count
+          : null,
+      };
+    });
+  }, [compareProvince, rawData, selectedYear, selectedTourismType, showCompareProvince]);
+
+  // Merge compare year and province data into chartData
   const chartDataWithCompare = useMemo(() => {
-    if (!compareYearData) return chartData;
-    return chartData.map((item, index) => ({
-      ...item,
-      compareRevenue: compareYearData[index]?.compareRevenue ?? null,
-      compareTourists: compareYearData[index]?.compareTourists ?? null,
-    }));
-  }, [chartData, compareYearData]);
+    let result = chartData;
+    
+    // Merge compare year data
+    if (compareYearData) {
+      result = result.map((item, index) => ({
+        ...item,
+        compareRevenue: compareYearData[index]?.compareRevenue ?? null,
+        compareTourists: compareYearData[index]?.compareTourists ?? null,
+      }));
+    }
+    
+    // Merge compare province data
+    if (compareProvinceData) {
+      result = result.map((item, index) => ({
+        ...item,
+        compareProvinceRevenue: compareProvinceData[index]?.compareProvinceRevenue ?? null,
+        compareProvinceTourists: compareProvinceData[index]?.compareProvinceTourists ?? null,
+      }));
+    }
+    
+    return result;
+  }, [chartData, compareYearData, compareProvinceData]);
 
   const metricLabel =
     metric === "revenue"
@@ -472,6 +571,90 @@ export function MonthlyTrendChart({
                 </Select>
               </div>
             )}
+            {chartType === "line" && showCompareProvince && rawData.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Label className="text-sm">Compare Province</Label>
+                <Popover open={compareProvinceOpen} onOpenChange={setCompareProvinceOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={compareProvinceOpen}
+                      className="w-40 justify-between"
+                    >
+                      {compareProvince
+                        ? getEnglishProvinceName(compareProvince) || compareProvince
+                        : "Select province..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-40 p-0" align="start">
+                    <Command>
+                      <CommandInput
+                        placeholder="Search province..."
+                        value={compareProvinceSearchQuery}
+                        onValueChange={setCompareProvinceSearchQuery}
+                      />
+                      <CommandList>
+                        <CommandEmpty>No province found.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="none"
+                            onSelect={() => {
+                              setCompareProvince(undefined);
+                              setCompareProvinceOpen(false);
+                              setCompareProvinceSearchQuery("");
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                !compareProvince ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            None
+                          </CommandItem>
+                          {THAI_PROVINCES.filter((province) => {
+                            // Exclude current province from comparison options
+                            const currentThaiName = provinceName ? getThaiProvinceName(provinceName) || provinceName : null;
+                            return province !== currentThaiName;
+                          })
+                            .filter((province) => {
+                              const englishName = getEnglishProvinceName(province) || "";
+                              const searchLower = compareProvinceSearchQuery.toLowerCase();
+                              return (
+                                province.toLowerCase().includes(searchLower) ||
+                                englishName.toLowerCase().includes(searchLower)
+                              );
+                            })
+                            .map((province) => (
+                              <CommandItem
+                                key={province}
+                                value={province}
+                                onSelect={() => {
+                                  setCompareProvince(province);
+                                  setCompareProvinceOpen(false);
+                                  setCompareProvinceSearchQuery("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    compareProvince === province
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                {getEnglishProvinceName(province) || province}
+                              </CommandItem>
+                            ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -575,6 +758,21 @@ export function MonthlyTrendChart({
                   dot={{ r: 4 }}
                   connectNulls={true}
                   name={`${compareYear} (Compare)`}
+                />
+              )}
+              {/* Compare province line (if compareProvince is selected) */}
+              {compareProvince && showCompareProvince && (
+                <Line
+                  type="monotone"
+                  dataKey={
+                    metric === "revenue" ? "compareProvinceRevenue" : "compareProvinceTourists"
+                  }
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  dot={{ r: 4, fill: "#10b981" }}
+                  connectNulls={true}
+                  name={`${getEnglishProvinceName(compareProvince) || compareProvince} (Compare)`}
                 />
               )}
             </LineChart>
@@ -882,6 +1080,116 @@ export function MonthlyTrendChart({
                 </div>
                 );
               })()}
+          </div>
+        )}
+
+        {/* Province Comparison Stats */}
+        {compareProvince && chartType === "line" && showCompareProvince && (
+          <div className="mt-6 p-4 bg-accent/30 rounded-lg border border-border">
+            <h4 className="text-sm font-semibold mb-3 text-foreground">
+              Province Comparison: {provinceName ? getEnglishProvinceName(provinceName) : "Current"} vs {getEnglishProvinceName(compareProvince) || compareProvince}
+            </h4>
+            {(() => {
+              // Get all months with data
+              const monthsWithData = chartData
+                .map((d, index) => {
+                  const monthObj = MONTHS.find((m) => m.label.slice(0, 3) === d.month);
+                  if (!monthObj) return null;
+                  
+                  const currentValue = metric === "revenue" 
+                    ? (d.actualRevenue ?? d.predictedRevenue) 
+                    : (d.actualTourists ?? d.predictedTourists);
+                  const compareValue = metric === "revenue"
+                    ? (chartDataWithCompare[index]?.compareProvinceRevenue ?? null)
+                    : (chartDataWithCompare[index]?.compareProvinceTourists ?? null);
+                  
+                  if (currentValue === null || currentValue === undefined || compareValue === null || compareValue === undefined) {
+                    return null;
+                  }
+                  
+                  const difference = currentValue - compareValue;
+                  const percentageChange = compareValue > 0 
+                    ? ((difference / compareValue) * 100) 
+                    : 0;
+                  const isIncrease = percentageChange > 0;
+                  
+                  return {
+                    month: MONTHS.find(m => m.value === monthObj.value)?.label || d.month,
+                    monthValue: monthObj.value,
+                    currentValue,
+                    compareValue,
+                    difference,
+                    percentageChange,
+                    isIncrease,
+                  };
+                })
+                .filter(Boolean) as Array<{
+                  month: string;
+                  monthValue: number;
+                  currentValue: number;
+                  compareValue: number;
+                  difference: number;
+                  percentageChange: number;
+                  isIncrease: boolean;
+                }>;
+              
+              if (monthsWithData.length === 0) {
+                return (
+                  <p className="text-sm text-muted-foreground">
+                    No data available for comparison.
+                  </p>
+                );
+              }
+              
+              // Format values
+              const formatValue = (val: number) => {
+                if (metric === "revenue") {
+                  return `${val.toLocaleString("en-US", { maximumFractionDigits: 0 })} M Baht`;
+                } else {
+                  return `${(val / 1_000_000).toLocaleString("en-US", { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                  })} M people`;
+                }
+              };
+              
+              return (
+                <div className="space-y-3">
+                  {monthsWithData.map((comp) => (
+                    <div key={comp.monthValue} className="p-3 bg-background/50 rounded-lg border border-border">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-semibold text-foreground">{comp.month}</span>
+                        <span className={`text-xs font-medium px-2 py-1 rounded ${
+                          comp.isIncrease ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        }`}>
+                          {comp.isIncrease ? "↑" : "↓"} {Math.abs(comp.percentageChange).toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                          <p className="text-muted-foreground mb-1">{provinceName ? getEnglishProvinceName(provinceName) : "Current"}:</p>
+                          <p className="font-semibold text-foreground">{formatValue(comp.currentValue)}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground mb-1">{getEnglishProvinceName(compareProvince) || compareProvince}:</p>
+                          <p className="font-semibold text-foreground">{formatValue(comp.compareValue)}</p>
+                        </div>
+                      </div>
+                      <div className="mt-2 pt-2 border-t border-border">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-muted-foreground">Difference:</span>
+                          <span className={`text-xs font-semibold ${
+                            comp.isIncrease ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                          }`}>
+                            {comp.isIncrease ? "+" : ""}{formatValue(comp.difference)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         )}
       </CardContent>

@@ -473,6 +473,7 @@ export function ProvinceDetails({
               tourismType={province.tourism_type}
               rawData={rawData}
               predictionYear={province.year}
+              showCompareProvince={false}
             />
           ) : province.monthlyHistory && province.monthlyHistory.length > 0 ? (
             <MonthlyTrendChart
@@ -481,6 +482,7 @@ export function ProvinceDetails({
               tourismType={province.tourism_type}
               rawData={rawData}
               predictionYear={province.year}
+              showCompareProvince={false}
             />
           ) : (
             <div className="text-center text-muted-foreground py-8">
@@ -503,17 +505,7 @@ export function ProvinceDetails({
             data={province.festivalImpact}
             provinceName={provinceLabel}
           />
-          <Card className="bg-accent/50 border-border">
-            <CardContent className="pt-6">
-              <h3 className="font-semibold mb-3 text-foreground">
-                Recommendation
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Focus campaign budgets around the festivals with the highest
-                uplift to maximise both revenue and visitor volume.
-              </p>
-            </CardContent>
-          </Card>
+          
         </div>
       </Card>
     </div>

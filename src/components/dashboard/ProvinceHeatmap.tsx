@@ -14,12 +14,36 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import type { HeatmapDataPoint } from "@/types/tourism";
 import {
   getMapProvinceName,
   getThaiProvinceName,
+  getEnglishProvinceName,
 } from "@/utils/provinceMapping";
-import { TrendingUp, Users, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import {
+  TrendingUp,
+  Users,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Check,
+  ChevronsUpDown,
+} from "lucide-react";
+import { THAI_PROVINCES } from "@/data/provinces";
+import { cn } from "@/lib/utils";
 
 const THAILAND_TOPO_JSON =
   "https://raw.githubusercontent.com/apisit/thailand.json/master/thailand.json";
@@ -43,6 +67,8 @@ export function ProvinceHeatmap({
     coordinates: [0, 0] as [number, number],
     zoom: 1,
   });
+  const [provinceSearchOpen, setProvinceSearchOpen] = useState(false);
+  const [provinceSearchQuery, setProvinceSearchQuery] = useState("");
 
   const handleMoveEnd = (position: {
     coordinates: [number, number];
@@ -130,10 +156,8 @@ export function ProvinceHeatmap({
   const { actualMin, actualMax } = useMemo(() => {
     if (data.length === 0) return { actualMin: 0, actualMax: 1 };
 
-    const values = data
-      .map((d) => d.value)
-      .filter((v) => v > 0);
-    
+    const values = data.map((d) => d.value).filter((v) => v > 0);
+
     if (values.length === 0) return { actualMin: 0, actualMax: 1 };
 
     return {
@@ -150,14 +174,18 @@ export function ProvinceHeatmap({
     const positiveValues = data
       .map((d) => {
         const growthValue = (d as any).growthValue;
-        return growthValue !== undefined && growthValue > 0 ? growthValue : null;
+        return growthValue !== undefined && growthValue > 0
+          ? growthValue
+          : null;
       })
       .filter((v): v is number => v !== null && v > 0);
 
     const negativeValues = data
       .map((d) => {
         const growthValue = (d as any).growthValue;
-        return growthValue !== undefined && growthValue < 0 ? Math.abs(growthValue) : null;
+        return growthValue !== undefined && growthValue < 0
+          ? Math.abs(growthValue)
+          : null;
       })
       .filter((v): v is number => v !== null && v > 0);
 
@@ -285,174 +313,175 @@ export function ProvinceHeatmap({
               onMoveEnd={handleMoveEnd}
             >
               <Geographies geography={THAILAND_TOPO_JSON}>
-              {({ geographies }) => {
-                // Debug: log first few province names from map
-                if (geographies.length > 0 && data.length > 0) {
-                  const sampleNames = geographies
-                    .slice(0, 3)
-                    .map((g) => g.properties.name);
-                  console.log("Map province names (sample):", sampleNames);
-                }
-                return geographies.map((geo) => {
-                  const mapProvinceName = geo.properties.name;
-                  const thaiName = getThaiProvinceName(mapProvinceName);
+                {({ geographies }) => {
+                  // Debug: log first few province names from map
+                  if (geographies.length > 0 && data.length > 0) {
+                    const sampleNames = geographies
+                      .slice(0, 3)
+                      .map((g) => g.properties.name);
+                    console.log("Map province names (sample):", sampleNames);
+                  }
+                  return geographies.map((geo) => {
+                    const mapProvinceName = geo.properties.name;
+                    const thaiName = getThaiProvinceName(mapProvinceName);
 
-                  // Try multiple lookup strategies
-                  let point =
-                    dataMap.get(mapProvinceName) || dataMap.get(thaiName);
+                    // Try multiple lookup strategies
+                    let point =
+                      dataMap.get(mapProvinceName) || dataMap.get(thaiName);
 
-                  // If no direct match, try to find by any matching key
-                  if (!point && dataMap.size > 0) {
-                    const entries = Array.from(dataMap.entries());
-                    for (const [key, value] of entries) {
-                      const keyThaiName = getThaiProvinceName(key);
-                      const keyMapName = getMapProvinceName(key);
-                      if (
-                        key === mapProvinceName ||
-                        key === thaiName ||
-                        keyThaiName === mapProvinceName ||
-                        keyThaiName === thaiName ||
-                        keyMapName === mapProvinceName ||
-                        keyMapName === thaiName
-                      ) {
-                        point = value;
-                        break;
+                    // If no direct match, try to find by any matching key
+                    if (!point && dataMap.size > 0) {
+                      const entries = Array.from(dataMap.entries());
+                      for (const [key, value] of entries) {
+                        const keyThaiName = getThaiProvinceName(key);
+                        const keyMapName = getMapProvinceName(key);
+                        if (
+                          key === mapProvinceName ||
+                          key === thaiName ||
+                          keyThaiName === mapProvinceName ||
+                          keyThaiName === thaiName ||
+                          keyMapName === mapProvinceName ||
+                          keyMapName === thaiName
+                        ) {
+                          point = value;
+                          break;
+                        }
                       }
                     }
-                  }
 
-                  const isSelected =
-                    selectedProvince === mapProvinceName ||
-                    selectedProvince === thaiName ||
-                    getMapProvinceName(selectedProvince) === mapProvinceName ||
-                    getThaiProvinceName(selectedProvince) === thaiName;
-                  const color = getProvinceColor(mapProvinceName, point);
+                    const isSelected =
+                      selectedProvince === mapProvinceName ||
+                      selectedProvince === thaiName ||
+                      getMapProvinceName(selectedProvince) ===
+                        mapProvinceName ||
+                      getThaiProvinceName(selectedProvince) === thaiName;
+                    const color = getProvinceColor(mapProvinceName, point);
 
-                  return (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      onClick={() => onProvinceClick?.(mapProvinceName)}
-                      style={{
-                        default: {
-                          fill: color,
-                          stroke: isSelected
-                            ? "hsl(var(--primary))"
-                            : "hsl(var(--border))",
-                          strokeWidth: isSelected ? 3 : 0.8,
-                          outline: "none",
-                          transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-                          opacity: isSelected ? 1 : 0.95,
-                        },
-                        hover: {
-                          fill: "hsl(var(--primary))",
-                          stroke: "hsl(var(--primary))",
-                          strokeWidth: 2.5,
-                          outline: "none",
-                          cursor: "pointer",
-                          filter: "brightness(1.15) saturate(1.2)",
-                          opacity: 1,
-                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                        },
-                        pressed: {
-                          fill: "hsl(var(--primary))",
-                          stroke: "hsl(var(--primary))",
-                          strokeWidth: 3,
-                          outline: "none",
-                          filter: "brightness(0.95)",
-                          transition: "all 0.1s ease",
-                        },
-                      }}
-                    >
-                      {point && (
-                        <HoverCard>
-                          <HoverCardTrigger asChild>
-                            <title>
-                              {point.provinceThai || mapProvinceName}
-                              {"\n"}
-                              {metric === "income"
-                                ? "Revenue"
-                                : "Visitors"}: {formatValue(point.value)}
-                            </title>
-                          </HoverCardTrigger>
-                          <HoverCardContent className="w-80">
-                            <div className="space-y-2">
-                              <h4 className="font-semibold text-foreground">
+                    return (
+                      <Geography
+                        key={geo.rsmKey}
+                        geography={geo}
+                        onClick={() => onProvinceClick?.(mapProvinceName)}
+                        style={{
+                          default: {
+                            fill: color,
+                            stroke: isSelected
+                              ? "hsl(var(--primary))"
+                              : "hsl(var(--border))",
+                            strokeWidth: isSelected ? 3 : 0.8,
+                            outline: "none",
+                            transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                            opacity: isSelected ? 1 : 0.95,
+                          },
+                          hover: {
+                            fill: "hsl(var(--primary))",
+                            stroke: "hsl(var(--primary))",
+                            strokeWidth: 2.5,
+                            outline: "none",
+                            cursor: "pointer",
+                            filter: "brightness(1.15) saturate(1.2)",
+                            opacity: 1,
+                            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          },
+                          pressed: {
+                            fill: "hsl(var(--primary))",
+                            stroke: "hsl(var(--primary))",
+                            strokeWidth: 3,
+                            outline: "none",
+                            filter: "brightness(0.95)",
+                            transition: "all 0.1s ease",
+                          },
+                        }}
+                      >
+                        {point && (
+                          <HoverCard>
+                            <HoverCardTrigger asChild>
+                              <title>
                                 {point.provinceThai || mapProvinceName}
-                              </h4>
-                              <div className="space-y-1 text-sm">
-                                {mode === "growth" ? (
-                                  <div className="flex items-center gap-2">
-                                    <TrendingUp className="h-4 w-4 text-primary" />
-                                    <span className="text-muted-foreground">
-                                      YoY Growth:
-                                    </span>
-                                    <span
-                                      className={`font-medium ${
-                                        ((point as any).growthValue ??
-                                          point.value) >= 0
-                                          ? "text-green-600 dark:text-green-400"
-                                          : "text-red-600 dark:text-red-400"
-                                      }`}
-                                    >
-                                      {formatValue(
-                                        point.value,
-                                        (point as any).growthValue
-                                      )}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <>
+                                {"\n"}
+                                {metric === "income"
+                                  ? "Revenue"
+                                  : "Visitors"}: {formatValue(point.value)}
+                              </title>
+                            </HoverCardTrigger>
+                            <HoverCardContent className="w-80">
+                              <div className="space-y-2">
+                                <h4 className="font-semibold text-foreground">
+                                  {point.provinceThai || mapProvinceName}
+                                </h4>
+                                <div className="space-y-1 text-sm">
+                                  {mode === "growth" ? (
                                     <div className="flex items-center gap-2">
                                       <TrendingUp className="h-4 w-4 text-primary" />
                                       <span className="text-muted-foreground">
-                                        Revenue:
+                                        YoY Growth:
                                       </span>
-                                      <span className="font-medium text-foreground">
-                                        {(
-                                          point.income ?? point.value
-                                        ).toLocaleString("en-US", {
-                                          maximumFractionDigits: 0,
-                                        })}{" "}
-                                        million Baht
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <Users className="h-4 w-4 text-secondary" />
-                                      <span className="text-muted-foreground">
-                                        Visitors:
-                                      </span>
-                                      <span className="font-medium text-foreground">
-                                        {(
-                                          (point.tourismAmount ?? point.value) /
-                                          1_000_000
-                                        ).toLocaleString("en-US", {
-                                          minimumFractionDigits: 2,
-                                          maximumFractionDigits: 2,
-                                        })}{" "}
-                                        million people
+                                      <span
+                                        className={`font-medium ${
+                                          ((point as any).growthValue ??
+                                            point.value) >= 0
+                                            ? "text-green-600 dark:text-green-400"
+                                            : "text-red-600 dark:text-red-400"
+                                        }`}
+                                      >
+                                        {formatValue(
+                                          point.value,
+                                          (point as any).growthValue
+                                        )}
                                       </span>
                                     </div>
-                                  </>
-                                )}
-                                <div className="text-xs text-muted-foreground">
-                                  {point.year && point.month
-                                    ? `Year: ${point.year} | Month: ${point.month}`
-                                    : ""}
-                                  {point.tourismType
-                                    ? ` | Type: ${point.tourismType}`
-                                    : ""}
+                                  ) : (
+                                    <>
+                                      <div className="flex items-center gap-2">
+                                        <TrendingUp className="h-4 w-4 text-primary" />
+                                        <span className="text-muted-foreground">
+                                          Revenue:
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                          {(
+                                            point.income ?? point.value
+                                          ).toLocaleString("en-US", {
+                                            maximumFractionDigits: 0,
+                                          })}{" "}
+                                          million Baht
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Users className="h-4 w-4 text-secondary" />
+                                        <span className="text-muted-foreground">
+                                          Visitors:
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                          {(
+                                            (point.tourismAmount ??
+                                              point.value) / 1_000_000
+                                          ).toLocaleString("en-US", {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                          })}{" "}
+                                          million people
+                                        </span>
+                                      </div>
+                                    </>
+                                  )}
+                                  <div className="text-xs text-muted-foreground">
+                                    {point.year && point.month
+                                      ? `Year: ${point.year} | Month: ${point.month}`
+                                      : ""}
+                                    {point.tourismType
+                                      ? ` | Type: ${point.tourismType}`
+                                      : ""}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </HoverCardContent>
-                        </HoverCard>
-                      )}
-                    </Geography>
-                  );
-                });
-              }}
-            </Geographies>
+                            </HoverCardContent>
+                          </HoverCard>
+                        )}
+                      </Geography>
+                    );
+                  });
+                }}
+              </Geographies>
             </ZoomableGroup>
           </ComposableMap>
 
@@ -489,57 +518,139 @@ export function ProvinceHeatmap({
             </Button>
           </div>
 
-          {/* Tooltip hint */}
+          {/* Search Province */}
           <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-md px-4 py-2 rounded-lg border border-border/50 shadow-lg">
-            <p className="text-xs text-muted-foreground flex items-center gap-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="font-medium">
-                {selectedProvince
-                  ? `Selected: ${selectedProvince}`
-                  : "Hover or click a province to see details"}
-              </span>
-            </p>
+            <Popover
+              open={provinceSearchOpen}
+              onOpenChange={setProvinceSearchOpen}
+            >
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={provinceSearchOpen}
+                  className="w-[200px] justify-between bg-background"
+                >
+                  {selectedProvince
+                    ? getEnglishProvinceName(selectedProvince) ||
+                      selectedProvince
+                    : "Search province..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-0" align="start">
+                <Command>
+                  <CommandInput
+                    placeholder="Search province..."
+                    value={provinceSearchQuery}
+                    onValueChange={setProvinceSearchQuery}
+                  />
+                  <CommandList>
+                    <CommandEmpty>No province found.</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem
+                        value="none"
+                        onSelect={() => {
+                          if (onProvinceClick) {
+                            onProvinceClick("");
+                          }
+                          setProvinceSearchOpen(false);
+                          setProvinceSearchQuery("");
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            !selectedProvince ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        None
+                      </CommandItem>
+                      {THAI_PROVINCES.filter((province) => {
+                        const englishName =
+                          getEnglishProvinceName(province) || "";
+                        const searchLower = provinceSearchQuery.toLowerCase();
+                        return (
+                          province.toLowerCase().includes(searchLower) ||
+                          englishName.toLowerCase().includes(searchLower)
+                        );
+                      }).map((province) => {
+                        const mapName = getMapProvinceName(province);
+                        const isSelected =
+                          selectedProvince === province ||
+                          selectedProvince === mapName ||
+                          getThaiProvinceName(selectedProvince) === province;
+
+                        return (
+                          <CommandItem
+                            key={province}
+                            value={province}
+                            onSelect={() => {
+                              // Use map name if available, otherwise use Thai name
+                              const provinceToSelect = mapName || province;
+                              if (onProvinceClick) {
+                                onProvinceClick(provinceToSelect);
+                              }
+                              setProvinceSearchOpen(false);
+                              setProvinceSearchQuery("");
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                isSelected ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {getEnglishProvinceName(province) || province}
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
         {/* Legend */}
         <div className="space-y-2">
           {/* Green Scale */}
-        <div className="flex items-center justify-center gap-4 text-xs flex-wrap">
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">Low:</span>
-            <div
-              className="w-4 h-4 rounded shadow-sm"
-              style={{ backgroundColor: `hsl(140 30% 92%)` }}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">High:</span>
-            <div
-              className="w-4 h-4 rounded shadow-sm"
-              style={{ backgroundColor: `hsl(140 50% 77%)` }}
-            />
-          </div>
-          <div className="text-muted-foreground">
-            Min:{" "}
-            {mode === "growth"
+          <div className="flex items-center justify-center gap-4 text-xs flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Low:</span>
+              <div
+                className="w-4 h-4 rounded shadow-sm"
+                style={{ backgroundColor: `hsl(140 30% 92%)` }}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">High:</span>
+              <div
+                className="w-4 h-4 rounded shadow-sm"
+                style={{ backgroundColor: `hsl(140 50% 77%)` }}
+              />
+            </div>
+            <div className="text-muted-foreground">
+              Min:{" "}
+              {mode === "growth"
                 ? positiveMin > 0
                   ? `${positiveMin.toFixed(2)}%`
                   : "N/A"
-              : `${min.toLocaleString("en-US", {
-                  maximumFractionDigits: 0,
-                })} ${metric === "income" ? "million Baht" : "people"}`}
-          </div>
-          <div className="text-muted-foreground">
-            Max:{" "}
-            {mode === "growth"
+                : `${min.toLocaleString("en-US", {
+                    maximumFractionDigits: 0,
+                  })} ${metric === "income" ? "million Baht" : "people"}`}
+            </div>
+            <div className="text-muted-foreground">
+              Max:{" "}
+              {mode === "growth"
                 ? positiveMax > 0
                   ? `${positiveMax.toFixed(2)}%`
                   : "N/A"
-              : `${max.toLocaleString("en-US", {
-                  maximumFractionDigits: 0,
-                })} ${metric === "income" ? "million Baht" : "people"}`}
-          </div>
+                : `${max.toLocaleString("en-US", {
+                    maximumFractionDigits: 0,
+                  })} ${metric === "income" ? "million Baht" : "people"}`}
+            </div>
           </div>
           {/* Red Scale - Show for volume mode with income metric OR growth mode */}
           {(mode === "volume" && metric === "income") || mode === "growth" ? (
