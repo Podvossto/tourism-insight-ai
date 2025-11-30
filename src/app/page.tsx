@@ -498,11 +498,8 @@ export default function HomePage() {
         <div className="flex h-16 items-center gap-4 px-4">
           <SidebarTrigger />
           <div className="flex items-center gap-3 flex-1">
-            <div
-              style={{ transform: "scale(0.6)", transformOrigin: "left" }}
-            >
-              <TIDLogo showText={false} />
-            </div>
+            
+            
 
             <h1 className="text-xl font-bold text-foreground">
               Tourism Insight AI — Prediction

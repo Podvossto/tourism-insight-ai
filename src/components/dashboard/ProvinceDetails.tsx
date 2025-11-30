@@ -472,6 +472,7 @@ export function ProvinceDetails({
               provinceName={provinceLabel}
               tourismType={province.tourism_type}
               rawData={rawData}
+              predictionYear={province.year}
             />
           ) : province.monthlyHistory && province.monthlyHistory.length > 0 ? (
             <MonthlyTrendChart
@@ -479,6 +480,7 @@ export function ProvinceDetails({
               provinceName={provinceLabel}
               tourismType={province.tourism_type}
               rawData={rawData}
+              predictionYear={province.year}
             />
           ) : (
             <div className="text-center text-muted-foreground py-8">

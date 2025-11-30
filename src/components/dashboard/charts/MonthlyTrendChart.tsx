@@ -43,6 +43,7 @@ interface MonthlyTrendChartProps {
   defaultYear?: number; // Default year from parent filter
   showCompareYear?: boolean; // Show compare year selector (default: true)
   rawData?: TourismDataRow[]; // Raw data for festival detection
+  predictionYear?: number; // Year used for prediction - cannot be selected as compare year
 }
 
 const monthLabels = MONTHS.map((month) => ({
@@ -57,6 +58,7 @@ export function MonthlyTrendChart({
   defaultYear,
   showCompareYear = true,
   rawData = [],
+  predictionYear,
 }: MonthlyTrendChartProps) {
   const [chartType, setChartType] = useState<"line" | "combo">("line");
   const [metric, setMetric] = useState<"revenue" | "tourists">("revenue");
@@ -105,6 +107,19 @@ export function MonthlyTrendChart({
     );
     return years;
   }, [data]);
+
+  // Filter out prediction year from compare year options
+  const compareYearOptions = useMemo(() => {
+    if (predictionYear === undefined) return yearOptions;
+    return yearOptions.filter((year) => year !== predictionYear);
+  }, [yearOptions, predictionYear]);
+
+  // Reset compareYear if it matches predictionYear
+  useEffect(() => {
+    if (predictionYear !== undefined && compareYear === predictionYear) {
+      setCompareYear(undefined);
+    }
+  }, [predictionYear, compareYear]);
 
   useEffect(() => {
     if (yearOptions.length > 0 && !selectedYear && defaultYear === undefined) {
@@ -427,8 +442,8 @@ export function MonthlyTrendChart({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="All">All</SelectItem>
-                  <SelectItem value="Thai">Domestic</SelectItem>
-                  <SelectItem value="Foreign">International</SelectItem>
+                  <SelectItem value="Thai">Thai</SelectItem>
+                  <SelectItem value="Foreign">Foreign</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -448,7 +463,7 @@ export function MonthlyTrendChart({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {yearOptions.map((year) => (
+                    {compareYearOptions.map((year) => (
                         <SelectItem key={year} value={year.toString()}>
                           {year}
                         </SelectItem>

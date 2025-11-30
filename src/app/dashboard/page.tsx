@@ -348,11 +348,6 @@ export default function DashboardPage() {
         <div className="flex h-16 items-center gap-4 px-4">
           <SidebarTrigger />
           <div className="flex items-center gap-3 flex-1">
-            <div
-              style={{ transform: "scale(0.4)", transformOrigin: "left" }}
-            >
-              <TIDLogo showText={false} />
-            </div>
             <h1 className="text-xl font-bold text-foreground">
               Tourism Insight AI — Dashboard
             </h1>
@@ -489,7 +484,6 @@ export default function DashboardPage() {
                   selectedProvince={selectedProvince}
                   onProvinceClick={handleProvinceClick}
                 />
-                
               </>
             )}
           </div>
@@ -502,8 +496,8 @@ export default function DashboardPage() {
                 className="w-full"
               >
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="top">Top Performers</TabsTrigger>
-                  <TabsTrigger value="rising">Rising Stars</TabsTrigger>
+                  <TabsTrigger value="top">Top Provinces</TabsTrigger>
+                  <TabsTrigger value="rising">Most Growth</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="top" className="space-y-4 mt-4">
