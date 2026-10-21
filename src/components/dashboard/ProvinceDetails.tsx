@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { MapPin } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
-import {  } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -14,7 +13,6 @@ import {
 import type { ProvinceData, MonthlyDataPoint } from "@/types/tourism";
 
 import { FestivalImpactChart } from "@/components/charts/FestivalImpactChart";
-import {  } from "@/components/charts/TrendChart";
 import { MonthlyTrendChart } from "@/components/charts/MonthlyTrendChart";
 import {
   getMonthlyDataForProvince,

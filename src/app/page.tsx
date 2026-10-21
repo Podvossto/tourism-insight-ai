@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Calendar } from "lucide-react";
-import {  } from "@/components/layout/TIDLogo";
 
 import { PredictionForm } from "@/components/dashboard/PredictionForm";
 import { ProvinceDetails } from "@/components/dashboard/ProvinceDetails";
 import { ThailandMap } from "@/components/dashboard/ThailandMap";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
+import { predict } from "@/lib/predictionService";
 import {
   getMapProvinceName,
   getThaiProvinceName,
@@ -33,24 +33,7 @@ export default function HomePage() {
 
   const predictMutation = useMutation<PredictionResult, Error, PredictionInput>(
     {
-      mutationFn: async (input: PredictionInput): Promise<PredictionResult> => {
-        const apiBase =
-          process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
-        const response = await fetch(`${apiBase}/predict/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(input),
-        });
-
-        if (!response.ok) {
-          const message = await response.text();
-          throw new Error(message || "Prediction failed");
-        }
-
-        return response.json();
-      },
+      mutationFn: predict,
       onSuccess: async (data, variables) => {
         // Get festivals for this province and month from dataset
         const { loadTourismData } = await import("@/lib/tourismDataLoader");
@@ -273,7 +256,10 @@ export default function HomePage() {
 
         toast({
           title: "Prediction ready",
-          description: `Latest forecast saved for ${data.province} (${variables.tourism_type}).`,
+          description:
+            data.source === "api"
+              ? `Live model prediction for ${data.province} (${variables.tourism_type}).`
+              : `Precomputed model output for ${data.province} (${variables.tourism_type}).`,
         });
       },
       onError: (error) => {

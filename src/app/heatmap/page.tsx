@@ -3,13 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Map, Calendar } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import {  } from "@/components/ui/label";
 import {
-  
-  
-  
-  
-  
 } from "@/components/ui/select";
 import { ProvinceHeatmap } from "@/components/dashboard/ProvinceHeatmap";
 import { MonthlyTrendChart } from "@/components/charts/MonthlyTrendChart";

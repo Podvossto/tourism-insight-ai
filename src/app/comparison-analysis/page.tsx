@@ -1,7 +1,6 @@
 "use client";
 
 import { Calendar } from "lucide-react";
-import {  } from "@/components/layout/TIDLogo";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 

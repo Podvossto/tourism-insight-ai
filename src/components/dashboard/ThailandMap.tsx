@@ -15,10 +15,6 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import {
-  
-  
-  
-  
 } from "@/components/ui/tooltip";
 import { ProvinceData } from "@/types/tourism";
 import {

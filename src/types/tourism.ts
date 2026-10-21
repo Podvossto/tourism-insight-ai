@@ -7,11 +7,14 @@ export interface PredictionInput {
   festival: string | null;
 }
 
+export type PredictionSource = "api" | "precomputed";
+
 export interface PredictionResult {
   province: string;
   year: number;
   predicted_income_million_baht: number;
   predicted_tourism_amount_people: number;
+  source?: PredictionSource;
 }
 
 export interface QuarterPrediction extends PredictionResult {

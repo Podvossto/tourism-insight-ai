@@ -7,9 +7,9 @@ import {
   TrendingUp,
   Search,
 } from "lucide-react";
+import { isApiConfigured } from "@/lib/predictionService";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {  } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -30,10 +30,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {  } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import {  } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { THAI_PROVINCES, MONTHS } from "@/lib/provinces";
 import type { PredictionInput } from "@/types/tourism";
@@ -45,10 +43,8 @@ import {
 } from "@/lib/festivalDetector";
 import { isHighSeason } from "@/lib/highSeasonLogic";
 import {
-  
   COMMON_FESTIVALS,
 } from "@/lib/festivalLogic";
-import {  } from "@/lib/utils";
 import { getEnglishProvinceName } from "@/lib/provinceMapping";
 
 interface PredictionFormProps {
@@ -277,7 +273,12 @@ export function PredictionForm({
           Prediction Controls
         </h2>
         <p className="text-sm text-muted-foreground">
-          Configure the parameters you want to send to the AI model.
+          Choose a province, month and visitor type.
+        </p>
+        <p className="text-xs text-muted-foreground rounded-md border border-border bg-muted/40 p-2">
+          {isApiConfigured
+            ? "Uses the prediction API when reachable; otherwise shows precomputed model output (Sep-Dec 2025)."
+            : "Results are precomputed model output for Sep-Dec 2025, loaded from a CSV. No live model is running."}
         </p>
       </div>
 

@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { Calendar, TrendingUp, Users, Filter } from "lucide-react";
-import {  } from "@/components/layout/TIDLogo";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -24,7 +23,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProvinceHeatmap } from "@/components/dashboard/ProvinceHeatmap";
-import {  } from "@/components/dashboard/DashboardSummaryCards";
 import { MonthlyTrendChart } from "@/components/charts/MonthlyTrendChart";
 import {
   loadTourismData,
