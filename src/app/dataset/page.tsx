@@ -22,13 +22,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { loadTourismData } from "@/utils/tourismDataLoader";
+import { loadTourismData } from "@/lib/tourismDataLoader";
 import type { TourismDataRow } from "@/types/tourism";
-import { THAI_PROVINCES, MONTHS } from "@/data/provinces";
-import { isHighSeason } from "@/utils/highSeasonLogic";
-import { formatFestivalName } from "@/utils/festivalDetector";
+import { THAI_PROVINCES, MONTHS } from "@/lib/provinces";
+import { isHighSeason } from "@/lib/highSeasonLogic";
+import { formatFestivalName } from "@/lib/festivalDetector";
 import { Badge } from "@/components/ui/badge";
-import { getEnglishProvinceName } from "@/utils/provinceMapping";
+import { getEnglishProvinceName } from "@/lib/provinceMapping";
 
 export default function DatasetPage() {
   const [rawData, setRawData] = useState<TourismDataRow[]>([]);

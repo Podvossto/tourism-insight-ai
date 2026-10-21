@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Calendar } from "lucide-react";
-import { TIDLogo } from "@/components/ui/TIDLogo";
+import { TIDLogo } from "@/components/layout/TIDLogo";
 
 import { PredictionForm } from "@/components/dashboard/PredictionForm";
 import { ProvinceDetails } from "@/components/dashboard/ProvinceDetails";
@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   getMapProvinceName,
   getThaiProvinceName,
-} from "@/utils/provinceMapping";
+} from "@/lib/provinceMapping";
 import type {
   PredictionInput,
   PredictionResult,
@@ -53,9 +53,9 @@ export default function HomePage() {
       },
       onSuccess: async (data, variables) => {
         // Get festivals for this province and month from dataset
-        const { loadTourismData } = await import("@/utils/tourismDataLoader");
+        const { loadTourismData } = await import("@/lib/tourismDataLoader");
         const { getFestivalsForProvinceAndMonth } = await import(
-          "@/utils/festivalDetector"
+          "@/lib/festivalDetector"
         );
         const tourismData = await loadTourismData();
         const detectedFestivals = getFestivalsForProvinceAndMonth(

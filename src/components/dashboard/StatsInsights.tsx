@@ -12,9 +12,9 @@ import {
   Users,
   Calendar,
 } from "lucide-react";
-import { loadTourismData } from "@/utils/tourismDataLoader";
+import { loadTourismData } from "@/lib/tourismDataLoader";
 import type { TourismDataRow } from "@/types/tourism";
-import { getMapProvinceName, getThaiProvinceName } from "@/utils/provinceMapping";
+import { getMapProvinceName, getThaiProvinceName } from "@/lib/provinceMapping";
 
 interface ProvinceInsight {
   province: string;

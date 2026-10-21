@@ -12,17 +12,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProvinceHeatmap } from "@/components/dashboard/ProvinceHeatmap";
-import { MonthlyTrendChart } from "@/components/dashboard/charts/MonthlyTrendChart";
+import { MonthlyTrendChart } from "@/components/charts/MonthlyTrendChart";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   loadTourismData,
   aggregateHeatmapData,
   getMonthlyDataForProvince,
-} from "@/utils/tourismDataLoader";
+} from "@/lib/tourismDataLoader";
 import {
   getMapProvinceName,
   getThaiProvinceName,
-} from "@/utils/provinceMapping";
+} from "@/lib/provinceMapping";
 import type {
   HeatmapDataPoint,
   TourismDataRow,

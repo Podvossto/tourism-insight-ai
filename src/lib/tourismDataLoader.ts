@@ -1,6 +1,6 @@
 import Papa from "papaparse";
 import type { TourismDataRow, HeatmapDataPoint, MonthlyDataPoint } from "@/types/tourism";
-import { getMapProvinceName } from "@/utils/provinceMapping";
+import { getMapProvinceName } from "@/lib/provinceMapping";
 
 const TOURISM_DATA_PATH = "/data/TourismData_ForMultiTarget.csv";
 

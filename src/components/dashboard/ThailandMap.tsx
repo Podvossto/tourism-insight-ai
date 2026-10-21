@@ -33,7 +33,7 @@ import {
   getThaiProvinceName,
   getMapProvinceName,
   getEnglishProvinceName,
-} from "@/utils/provinceMapping";
+} from "@/lib/provinceMapping";
 
 const THAILAND_TOPO_JSON =
   "https://raw.githubusercontent.com/apisit/thailand.json/master/thailand.json";

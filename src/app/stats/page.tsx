@@ -1,14 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Calendar } from "lucide-react";
-import { TIDLogo } from "@/components/ui/TIDLogo";
+import { TIDLogo } from "@/components/layout/TIDLogo";
 import { SummaryCards } from "@/components/dashboard/SummaryCards";
 import { ThailandMap } from "@/components/dashboard/ThailandMap";
 import { StatsInsights } from "@/components/dashboard/StatsInsights";
 import { StatsProvinceDetails } from "@/components/dashboard/StatsProvinceDetails";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { loadHistoricalData } from "@/utils/csvLoader";
-import { getThaiProvinceName } from "@/utils/provinceMapping";
+import { loadHistoricalData } from "@/lib/csvLoader";
+import { getThaiProvinceName } from "@/lib/provinceMapping";
 import type { ProvinceData } from "@/types/tourism";
 
 export default function StatsPage() {

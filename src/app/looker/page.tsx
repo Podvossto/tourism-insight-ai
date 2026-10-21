@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { TIDLogo } from "@/components/ui/TIDLogo";
+import { TIDLogo } from "@/components/layout/TIDLogo";
 
 /**
  * Google Looker Studio Dashboard Embedding Guide:

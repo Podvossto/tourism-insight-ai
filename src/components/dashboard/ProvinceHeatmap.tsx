@@ -32,7 +32,7 @@ import {
   getMapProvinceName,
   getThaiProvinceName,
   getEnglishProvinceName,
-} from "@/utils/provinceMapping";
+} from "@/lib/provinceMapping";
 import {
   TrendingUp,
   Users,
@@ -42,7 +42,7 @@ import {
   Check,
   ChevronsUpDown,
 } from "lucide-react";
-import { THAI_PROVINCES } from "@/data/provinces";
+import { THAI_PROVINCES } from "@/lib/provinces";
 import { cn } from "@/lib/utils";
 
 const THAILAND_TOPO_JSON =

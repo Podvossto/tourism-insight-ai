@@ -13,16 +13,16 @@ import {
 } from "@/components/ui/select";
 import type { ProvinceData, MonthlyDataPoint } from "@/types/tourism";
 
-import { FestivalImpactChart } from "./charts/FestivalImpactChart";
-import { TrendChart } from "./charts/TrendChart";
-import { MonthlyTrendChart } from "./charts/MonthlyTrendChart";
+import { FestivalImpactChart } from "@/components/charts/FestivalImpactChart";
+import { TrendChart } from "@/components/charts/TrendChart";
+import { MonthlyTrendChart } from "@/components/charts/MonthlyTrendChart";
 import {
   getMonthlyDataForProvince,
   loadTourismData,
-} from "@/utils/tourismDataLoader";
+} from "@/lib/tourismDataLoader";
 import type { TourismDataRow } from "@/types/tourism";
-import { MONTHS } from "@/data/provinces";
-import { getEnglishProvinceName } from "@/utils/provinceMapping";
+import { MONTHS } from "@/lib/provinces";
+import { getEnglishProvinceName } from "@/lib/provinceMapping";
 
 interface ProvinceDetailsProps {
   province?: ProvinceData;

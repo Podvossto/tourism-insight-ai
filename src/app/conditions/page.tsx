@@ -22,19 +22,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { loadTourismData } from "@/utils/tourismDataLoader";
+import { loadTourismData } from "@/lib/tourismDataLoader";
 import {
   getFestivalsForProvinceAndMonth,
   formatFestivalName,
-} from "@/utils/festivalDetector";
-import { THAI_PROVINCES, MONTHS } from "@/data/provinces";
+} from "@/lib/festivalDetector";
+import { THAI_PROVINCES, MONTHS } from "@/lib/provinces";
 import type { TourismDataRow } from "@/types/tourism";
-import { isHighSeason, getHighSeasonMonths } from "@/utils/highSeasonLogic";
+import { isHighSeason, getHighSeasonMonths } from "@/lib/highSeasonLogic";
 import {
   COMMON_FESTIVALS,
   getProvinceSpecificFestivals,
-} from "@/utils/festivalLogic";
-import { getEnglishProvinceName } from "@/utils/provinceMapping";
+} from "@/lib/festivalLogic";
+import { getEnglishProvinceName } from "@/lib/provinceMapping";
 
 export default function ConditionsPage() {
   const [rawData, setRawData] = useState<TourismDataRow[]>([]);

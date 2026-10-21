@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { Calendar, TrendingUp, Users, Filter } from "lucide-react";
-import { TIDLogo } from "@/components/ui/TIDLogo";
+import { TIDLogo } from "@/components/layout/TIDLogo";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -25,22 +25,22 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProvinceHeatmap } from "@/components/dashboard/ProvinceHeatmap";
 import { DashboardSummaryCards } from "@/components/dashboard/DashboardSummaryCards";
-import { MonthlyTrendChart } from "@/components/dashboard/charts/MonthlyTrendChart";
+import { MonthlyTrendChart } from "@/components/charts/MonthlyTrendChart";
 import {
   loadTourismData,
   aggregateHeatmapData,
   getMonthlyDataForProvince,
-} from "@/utils/tourismDataLoader";
+} from "@/lib/tourismDataLoader";
 import {
   getThaiProvinceName,
   getMapProvinceName,
   getEnglishProvinceName,
-} from "@/utils/provinceMapping";
+} from "@/lib/provinceMapping";
 import {
   getFestivalsForProvinceAndMonth,
   formatFestivalName,
-} from "@/utils/festivalDetector";
-import { MONTHS } from "@/data/provinces";
+} from "@/lib/festivalDetector";
+import { MONTHS } from "@/lib/provinces";
 import type {
   TourismDataRow,
   HeatmapDataPoint,

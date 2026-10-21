@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { MONTHS } from "@/data/provinces";
+import { MONTHS } from "@/lib/provinces";
 import type { MonthlyDataPoint } from "@/types/tourism";
 
 interface YearComparisonChartProps {

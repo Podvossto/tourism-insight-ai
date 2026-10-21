@@ -35,23 +35,23 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { THAI_PROVINCES, FESTIVALS, MONTHS } from "@/data/provinces";
+import { THAI_PROVINCES, FESTIVALS, MONTHS } from "@/lib/provinces";
 import type { PredictionInput } from "@/types/tourism";
-import { loadTourismData } from "@/utils/tourismDataLoader";
+import { loadTourismData } from "@/lib/tourismDataLoader";
 import type { TourismDataRow } from "@/types/tourism";
 import {
   getFestivalsForProvinceAndMonth,
   formatFestivalName,
   getAllFestivalsFromData,
-} from "@/utils/festivalDetector";
-import { isHighSeason } from "@/utils/highSeasonLogic";
+} from "@/lib/festivalDetector";
+import { isHighSeason } from "@/lib/highSeasonLogic";
 import {
   getAvailableFestivals,
   COMMON_FESTIVALS,
   getProvinceSpecificFestivals,
-} from "@/utils/festivalLogic";
+} from "@/lib/festivalLogic";
 import { cn } from "@/lib/utils";
-import { getEnglishProvinceName } from "@/utils/provinceMapping";
+import { getEnglishProvinceName } from "@/lib/provinceMapping";
 
 interface PredictionFormProps {
   onPredict: (input: PredictionInput) => void;

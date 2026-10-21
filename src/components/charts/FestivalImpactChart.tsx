@@ -2,8 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles } from "lucide-react";
 import type { FestivalImpact } from "@/types/tourism";
-import { COMMON_FESTIVALS } from "@/utils/festivalLogic";
-import { formatFestivalName } from "@/utils/festivalDetector";
+import { COMMON_FESTIVALS } from "@/lib/festivalLogic";
+import { formatFestivalName } from "@/lib/festivalDetector";
 
 interface FestivalImpactChartProps {
   data?: FestivalImpact[];

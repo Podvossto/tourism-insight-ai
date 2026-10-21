@@ -39,18 +39,18 @@ import {
 } from "@/components/ui/popover";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MONTHS, THAI_PROVINCES } from "@/data/provinces";
+import { MONTHS, THAI_PROVINCES } from "@/lib/provinces";
 import type { MonthlyDataPoint, TourismDataRow } from "@/types/tourism";
 import {
   getFestivalsForProvinceAndMonth,
   formatFestivalName,
-} from "@/utils/festivalDetector";
+} from "@/lib/festivalDetector";
 import {
   COMMON_FESTIVALS,
   getProvinceSpecificFestivals,
-} from "@/utils/festivalLogic";
-import { getEnglishProvinceName, getThaiProvinceName } from "@/utils/provinceMapping";
-import { getMonthlyDataForProvince } from "@/utils/tourismDataLoader";
+} from "@/lib/festivalLogic";
+import { getEnglishProvinceName, getThaiProvinceName } from "@/lib/provinceMapping";
+import { getMonthlyDataForProvince } from "@/lib/tourismDataLoader";
 
 interface MonthlyTrendChartProps {
   data: MonthlyDataPoint[];

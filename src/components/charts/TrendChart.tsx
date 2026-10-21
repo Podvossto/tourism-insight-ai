@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MONTHS } from "@/data/provinces";
+import { MONTHS } from "@/lib/provinces";
 import type { MonthlyDataPoint } from "@/types/tourism";
 
 interface TrendChartProps {

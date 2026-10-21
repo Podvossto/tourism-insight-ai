@@ -1,6 +1,6 @@
 import Papa from "papaparse";
 
-import { MONTHS } from "@/data/provinces";
+import { MONTHS } from "@/lib/provinces";
 import type {
   MonthlyDataPoint,
   ProvinceData,

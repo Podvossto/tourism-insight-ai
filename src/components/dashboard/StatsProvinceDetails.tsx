@@ -3,10 +3,10 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, TrendingUp, Users, Calendar } from "lucide-react";
-import { MonthlyTrendChart } from "./charts/MonthlyTrendChart";
-import { loadTourismData, getMonthlyDataForProvince } from "@/utils/tourismDataLoader";
+import { MonthlyTrendChart } from "@/components/charts/MonthlyTrendChart";
+import { loadTourismData, getMonthlyDataForProvince } from "@/lib/tourismDataLoader";
 import type { MonthlyDataPoint } from "@/types/tourism";
-import { getMapProvinceName } from "@/utils/provinceMapping";
+import { getMapProvinceName } from "@/lib/provinceMapping";
 
 interface StatsProvinceDetailsProps {
   provinceThai?: string;

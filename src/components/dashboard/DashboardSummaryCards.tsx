@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { TrendingUp, Users, ArrowUp, ArrowDown } from "lucide-react";
-import { MONTHS } from "@/data/provinces";
+import { MONTHS } from "@/lib/provinces";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TourismDataRow } from "@/types/tourism";
 

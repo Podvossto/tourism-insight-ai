@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { ReactNode } from "react";
 
-import { SidebarWrapper } from "@/components/dashboard/SidebarWrapper";
-import { Providers } from "@/components/providers";
+import { SidebarWrapper } from "@/components/layout/SidebarWrapper";
+import { Providers } from "@/components/layout/providers";
 import { cn } from "@/lib/utils";
 
 import "./globals.css";

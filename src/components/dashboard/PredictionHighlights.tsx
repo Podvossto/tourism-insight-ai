@@ -2,7 +2,7 @@ import { ArrowUpRight, Sparkles } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { QuarterPrediction } from "@/types/tourism";
-import { MONTHS } from "@/data/provinces";
+import { MONTHS } from "@/lib/provinces";
 
 interface PredictionHighlightsProps {
   predictions: QuarterPrediction[];
