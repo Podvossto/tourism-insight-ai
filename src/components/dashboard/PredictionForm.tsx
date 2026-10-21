@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import {  } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -30,27 +30,25 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Switch } from "@/components/ui/switch";
+import {  } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import {  } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { THAI_PROVINCES, FESTIVALS, MONTHS } from "@/lib/provinces";
+import { THAI_PROVINCES, MONTHS } from "@/lib/provinces";
 import type { PredictionInput } from "@/types/tourism";
 import { loadTourismData } from "@/lib/tourismDataLoader";
 import type { TourismDataRow } from "@/types/tourism";
 import {
   getFestivalsForProvinceAndMonth,
   formatFestivalName,
-  getAllFestivalsFromData,
 } from "@/lib/festivalDetector";
 import { isHighSeason } from "@/lib/highSeasonLogic";
 import {
-  getAvailableFestivals,
+  
   COMMON_FESTIVALS,
-  getProvinceSpecificFestivals,
 } from "@/lib/festivalLogic";
-import { cn } from "@/lib/utils";
+import {  } from "@/lib/utils";
 import { getEnglishProvinceName } from "@/lib/provinceMapping";
 
 interface PredictionFormProps {

@@ -5,16 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   TrendingUp,
-  TrendingDown,
   ArrowUpRight,
   MapPin,
   DollarSign,
   Users,
-  Calendar,
 } from "lucide-react";
 import { loadTourismData } from "@/lib/tourismDataLoader";
 import type { TourismDataRow } from "@/types/tourism";
-import { getMapProvinceName, getThaiProvinceName } from "@/lib/provinceMapping";
+import { getMapProvinceName } from "@/lib/provinceMapping";
 
 interface ProvinceInsight {
   province: string;

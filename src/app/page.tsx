@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Calendar } from "lucide-react";
-import { TIDLogo } from "@/components/layout/TIDLogo";
+import {  } from "@/components/layout/TIDLogo";
 
 import { PredictionForm } from "@/components/dashboard/PredictionForm";
 import { ProvinceDetails } from "@/components/dashboard/ProvinceDetails";
@@ -163,12 +163,6 @@ export default function HomePage() {
             trends: existing?.trends || newData.trends,
           };
           
-          // Debug: Log monthlyHistory length to verify all months are preserved
-          if (mergedMonthlyHistory.length > 0) {
-            console.log(`[${key}] Merged monthlyHistory length:`, mergedMonthlyHistory.length, 
-              'months:', mergedMonthlyHistory.map(d => `${d.month}/${d.year} (${d.tourism_type})`).join(', '));
-          }
-
           const updated = { ...prev, [key]: updatedData };
 
           // Link Thai and Foreign data if both exist

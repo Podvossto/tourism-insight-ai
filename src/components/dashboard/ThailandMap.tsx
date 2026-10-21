@@ -15,10 +15,10 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+  
+  
+  
+  
 } from "@/components/ui/tooltip";
 import { ProvinceData } from "@/types/tourism";
 import {
@@ -161,24 +161,6 @@ export function ThailandMap({
                     // Check if selected (either by English name or Thai name)
                     const thaiName = getThaiProvinceName(provinceName);
 
-                    // Debug: log province names for troubleshooting
-                    if (
-                      ["Bangkok", "Si Sa Ket", "Nong Bua Lamphu"].includes(
-                        provinceName
-                      )
-                    ) {
-                      console.log(
-                        `Map province: ${provinceName}, Thai name: ${thaiName}, Available keys:`,
-                        Object.keys(provinceData || {}).filter(
-                          (k) =>
-                            k.includes(provinceName) ||
-                            k.includes(thaiName) ||
-                            k.includes("กรุงเทพ") ||
-                            k.includes("ศรีสะเกษ") ||
-                            k.includes("หนองบัว")
-                        )
-                      );
-                    }
                     const isSelected =
                       selectedProvince === provinceName ||
                       selectedProvince === thaiName ||

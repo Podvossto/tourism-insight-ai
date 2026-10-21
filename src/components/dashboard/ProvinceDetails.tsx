@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { MapPin, TrendingUp, Users, Calendar } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
+import {  } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -14,7 +14,7 @@ import {
 import type { ProvinceData, MonthlyDataPoint } from "@/types/tourism";
 
 import { FestivalImpactChart } from "@/components/charts/FestivalImpactChart";
-import { TrendChart } from "@/components/charts/TrendChart";
+import {  } from "@/components/charts/TrendChart";
 import { MonthlyTrendChart } from "@/components/charts/MonthlyTrendChart";
 import {
   getMonthlyDataForProvince,

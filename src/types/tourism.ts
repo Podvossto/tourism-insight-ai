@@ -67,6 +67,7 @@ export interface HeatmapDataPoint {
   year: number;
   month: number;
   tourismType: "Thai" | "Foreign" | "All";
+  growthValue?: number;
   income?: number; // Store for tooltip
   tourismAmount?: number; // Store for tooltip
 }

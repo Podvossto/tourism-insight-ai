@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { Map, Filter, Calendar } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Map, Calendar } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import {  } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  
+  
+  
+  
+  
 } from "@/components/ui/select";
 import { ProvinceHeatmap } from "@/components/dashboard/ProvinceHeatmap";
 import { MonthlyTrendChart } from "@/components/charts/MonthlyTrendChart";
@@ -47,8 +47,6 @@ export default function HeatmapPage() {
   useEffect(() => {
     loadTourismData()
       .then((data) => {
-        console.log("Loaded tourism data:", data.length, "rows");
-        console.log("Sample rows:", data.slice(0, 3));
         setRawData(data);
         setLoading(false);
       })
@@ -68,8 +66,6 @@ export default function HeatmapPage() {
       tourismType: tourismType === "All" ? undefined : tourismType,
     });
 
-    console.log("Aggregated heatmap data:", aggregated.length, "provinces");
-    console.log("Sample data:", aggregated.slice(0, 3));
     setHeatmapData(aggregated);
   }, [rawData, year, month, metric, tourismType]);
 

@@ -107,20 +107,6 @@ export function ProvinceHeatmap({
         map.set(thaiName, point);
       }
     });
-    // Debug: Log data values for volume mode
-    if (data.length > 0 && mode === "volume") {
-      const sampleValues = data
-        .slice(0, 5)
-        .map((d) => ({ province: d.province, value: d.value }));
-      console.log("Heatmap data map created:", map.size, "entries");
-      console.log("Sample values (volume mode):", sampleValues);
-      const allValues = data.map((d) => d.value);
-      console.log("All values range:", {
-        min: Math.min(...allValues),
-        max: Math.max(...allValues),
-        avg: allValues.reduce((sum, v) => sum + v, 0) / allValues.length,
-      });
-    }
     return map;
   }, [data]);
 
@@ -132,7 +118,7 @@ export function ProvinceHeatmap({
     const values = data
       .map((d) => {
         if (mode === "growth") {
-          const growthValue = (d as any).growthValue;
+          const growthValue = d.growthValue;
           return growthValue !== undefined ? Math.abs(growthValue) : d.value;
         }
         return d.value;
@@ -173,7 +159,7 @@ export function ProvinceHeatmap({
 
     const positiveValues = data
       .map((d) => {
-        const growthValue = (d as any).growthValue;
+        const growthValue = d.growthValue;
         return growthValue !== undefined && growthValue > 0
           ? growthValue
           : null;
@@ -182,7 +168,7 @@ export function ProvinceHeatmap({
 
     const negativeValues = data
       .map((d) => {
-        const growthValue = (d as any).growthValue;
+        const growthValue = d.growthValue;
         return growthValue !== undefined && growthValue < 0
           ? Math.abs(growthValue)
           : null;
@@ -220,7 +206,7 @@ export function ProvinceHeatmap({
     // Different color scales for different modes
     if (mode === "growth") {
       // For growth: use red-green scale (red for negative, green for positive)
-      const growthValue = (dataPoint as any).growthValue;
+      const growthValue = dataPoint.growthValue;
 
       // If growthValue is undefined, we can't determine the sign, use muted color
       if (growthValue === undefined || growthValue === null) {
@@ -314,13 +300,6 @@ export function ProvinceHeatmap({
             >
               <Geographies geography={THAILAND_TOPO_JSON}>
                 {({ geographies }) => {
-                  // Debug: log first few province names from map
-                  if (geographies.length > 0 && data.length > 0) {
-                    const sampleNames = geographies
-                      .slice(0, 3)
-                      .map((g) => g.properties.name);
-                    console.log("Map province names (sample):", sampleNames);
-                  }
                   return geographies.map((geo) => {
                     const mapProvinceName = geo.properties.name;
                     const thaiName = getThaiProvinceName(mapProvinceName);
@@ -418,7 +397,7 @@ export function ProvinceHeatmap({
                                       </span>
                                       <span
                                         className={`font-medium ${
-                                          ((point as any).growthValue ??
+                                          (point.growthValue ??
                                             point.value) >= 0
                                             ? "text-green-600 dark:text-green-400"
                                             : "text-red-600 dark:text-red-400"
@@ -426,7 +405,7 @@ export function ProvinceHeatmap({
                                       >
                                         {formatValue(
                                           point.value,
-                                          (point as any).growthValue
+                                          point.growthValue
                                         )}
                                       </span>
                                     </div>

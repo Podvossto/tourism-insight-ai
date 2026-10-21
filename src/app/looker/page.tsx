@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { TIDLogo } from "@/components/layout/TIDLogo";
+import {  } from "@/components/layout/TIDLogo";
 
 /**
  * Google Looker Studio Dashboard Embedding Guide:
@@ -140,13 +140,13 @@ export default function LookerPage() {
                   <ol className="list-decimal list-inside space-y-1 ml-2">
                     <li>เปิด Google Looker Studio Dashboard ที่ต้องการ</li>
                     <li>คลิกปุ่ม <strong>Share</strong> (ด้านบนขวา)</li>
-                    <li>เลือก <strong>"Embed report"</strong></li>
+                    <li>เลือก <strong>&quot;Embed report&quot;</strong></li>
                     <li>คัดลอก Embed URL ที่แสดง</li>
                     <li>วาง URL ในช่องด้านบน</li>
                   </ol>
                   <p className="mt-2">
                     <strong>หมายเหตุ:</strong> ตรวจสอบว่า Dashboard ตั้งค่าเป็น 
-                    "Anyone with the link can view" เพื่อให้สามารถ embed ได้
+                    &quot;Anyone with the link can view&quot; เพื่อให้สามารถ embed ได้
                   </p>
                 </AlertDescription>
               </Alert>
