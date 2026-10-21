@@ -64,7 +64,7 @@ const getFestivalsFromRow = (row: CSVRow): string[] => {
   const festivals: string[] = [];
   Object.keys(row).forEach((key) => {
     // Check if key starts with "Festival_" and value is "1" (One-hot encoding)
-    if (key.startsWith("Festival_") && (row[key] === "1" || row[key] === 1 || row[key] === "1.0")) {
+    if (key.startsWith("Festival_") && (row[key] === "1" || row[key] === "1.0")) {
       // Keep the full key name (with Festival_ prefix) for consistency
       festivals.push(key);
     }

@@ -424,7 +424,13 @@ export function MonthlyTrendChart({
 
   // Merge compare year and province data into chartData
   const chartDataWithCompare = useMemo(() => {
-    let result = chartData;
+    type CompareFields = {
+      compareRevenue?: number | null;
+      compareTourists?: number | null;
+      compareProvinceRevenue?: number | null;
+      compareProvinceTourists?: number | null;
+    };
+    let result: Array<(typeof chartData)[number] & CompareFields> = chartData;
     
     // Merge compare year data
     if (compareYearData) {
@@ -929,7 +935,6 @@ export function MonthlyTrendChart({
                 dataKey="actualTouristsForCombo"
                 fill="hsl(var(--primary))"
                 name="Actual Visitors"
-                connectNulls={false}
               />
               {/* Bar Chart for Visitors - Predicted */}
               <Bar
@@ -937,7 +942,6 @@ export function MonthlyTrendChart({
                 dataKey="predictedTouristsForCombo"
                 fill="hsl(var(--primary)/0.6)"
                 name="Predicted Visitors"
-                connectNulls={false}
               />
               {/* Line Chart for Revenue - Actual */}
               <Line
@@ -1033,7 +1037,7 @@ export function MonthlyTrendChart({
                   percentageChange,
                   isIncrease,
                 };
-              }).filter(Boolean);
+              }).filter((c): c is NonNullable<typeof c> => c !== null);
               
               if (monthComparisons.length === 0) {
                 return (

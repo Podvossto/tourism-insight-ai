@@ -66,7 +66,7 @@ export function getHighSeasonMonths(province: string): number[] {
   const zoneMonths = zone ? ZONE_HIGH_SEASONS[zone] : [];
   
   // Combine zone months with universal months and remove duplicates
-  const allMonths = [...new Set([...zoneMonths, ...UNIVERSAL_HIGH_SEASONS])];
+  const allMonths = Array.from(new Set([...zoneMonths, ...UNIVERSAL_HIGH_SEASONS]));
   return allMonths.sort((a, b) => a - b);
 }
 

@@ -89,7 +89,7 @@ export function YearComparisonChart({
           existing.selectedRevenue =
             (existing.selectedRevenue + point.revenue) / 2;
           existing.selectedTourists =
-            (existing.selectedTourists + point.tourists) / 2;
+            ((existing.selectedTourists ?? 0) + point.tourists) / 2;
         }
       }
     });
@@ -105,7 +105,7 @@ export function YearComparisonChart({
           // Average if multiple data points
           existing.compareRevenue = (existing.compareRevenue + point.revenue) / 2;
           existing.compareTourists =
-            (existing.compareTourists + point.tourists) / 2;
+            ((existing.compareTourists ?? 0) + point.tourists) / 2;
         }
       }
     });

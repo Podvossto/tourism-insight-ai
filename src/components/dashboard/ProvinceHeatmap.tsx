@@ -60,7 +60,7 @@ export function ProvinceHeatmap({
   data,
   metric,
   mode = "volume",
-  selectedProvince,
+  selectedProvince = "",
   onProvinceClick,
 }: ProvinceHeatmapProps) {
   const [position, setPosition] = useState({
